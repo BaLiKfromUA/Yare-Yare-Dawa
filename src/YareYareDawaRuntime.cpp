@@ -3,6 +3,8 @@
 //
 
 #include "YareYareDawaRuntime.h"
+#include "scanning/Scanner.h"
+#include "scanning/Token.h"
 #include "util.h"
 
 void YareYareDawaRuntime::runFile(std::string_view filePath) {
@@ -11,29 +13,35 @@ void YareYareDawaRuntime::runFile(std::string_view filePath) {
     try {
         content = util::getFileContentAsString(filePath);
     } catch (std::invalid_argument const &ex) {
-        errorState = true;
+        isError = true;
         std::cerr << ex.what() << "\n";
         return;
     }
-    errorState = run(content);
+
+    run(content);
 }
 
 void YareYareDawaRuntime::runPrompt() {
-    bool scanLine = true;
-    while (scanLine) {
+    while (true) {
         std::cout << "> ";
         std::string line;
-        if (!std::getline(std::cin, line)) break;
-        scanLine = run(line);
+        // todo: improve termination
+        if (!std::getline(std::cin, line) || line == "exit") break;
+        run(line);
+        isError = false;
     }
-    if (scanLine) {
-        std::cout << "Yare Yare Dawa...\n";
-    }
+
+    std::cout << "Yare Yare Dawa...\n";
 }
 
-bool YareYareDawaRuntime::run(std::string_view source) {
-    // dummy todo:
-    std::cout << source << '\n';
-    errorState = true;
-    return true;
+void YareYareDawaRuntime::run(std::string_view source) {
+    auto scanner = scanning::Scanner(source);
+    auto tokens = scanner.scanTokens();
+
+    // For now, just print the tokens.
+    for (const auto &token: tokens) {
+        std::cout << token.toString() << std::endl;
+    }
+
+    isError = true;
 }

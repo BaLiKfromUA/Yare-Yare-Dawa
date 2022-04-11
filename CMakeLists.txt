@@ -11,6 +11,7 @@ file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 file(GLOB_RECURSE INCLUDES ${PROJECT_SOURCE_DIR}/src/*.h*)
 
 add_executable(${PROJECT_NAME} ${INCLUDES} ${SOURCES})
+target_include_directories(${PROJECT_NAME} PRIVATE src)
 
 ##########################################################
 # Google test
@@ -26,9 +27,11 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
+# todo: improve
 add_executable(
         ${TEST_NAME}
-        ${PROJECT_SOURCE_DIR}/test/sample_test.cpp
+        ${INCLUDES} ${SOURCES}
+        test/scanning/scanner_test.cpp
 )
 
 target_include_directories(${TEST_NAME} PRIVATE src)

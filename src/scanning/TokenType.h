@@ -30,7 +30,9 @@ namespace scanning {
         END_OF_FILE
     };
 
-    std::string toString(TokenType type) {
+
+    // todo: fix inline
+    inline std::string toString(TokenType type) {
         static const std::string strings[] = {
                 "LEFT_PAREN", "RIGHT_PAREN", "LEFT_BRACE", "RIGHT_BRACE",
                 "COMMA", "DOT", "MINUS", "PLUS", "SEMICOLON", "SLASH", "STAR",

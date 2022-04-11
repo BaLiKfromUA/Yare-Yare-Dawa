@@ -22,7 +22,7 @@ namespace scanning {
 
         }
 
-        std::string toString() {
+        [[nodiscard]] std::string toString() const{
             std::string literal_text;
             // todo: make this Object.toString-like later!!!
             switch (type) {

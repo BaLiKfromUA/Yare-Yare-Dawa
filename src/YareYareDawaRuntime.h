@@ -10,31 +10,30 @@
 #include <iostream>
 
 class YareYareDawaRuntime {
-private:
-    bool errorState = false;
 public:
     /*=== error handling ===*/
-    [[nodiscard]] bool isErrorState() const {
-        return errorState;
-    }
+    static bool isError;
 
-    void report(int line, std::string_view where,
-                std::string_view message) {
+    static void report(int line, std::string_view where,
+                       std::string_view message) {
         std::cerr << "[line " << line << "] Error" << where << ": " << message << "\n";
-        errorState = true;
+        isError = true;
     }
 
-    void error(int line, std::string_view message) {
+    static void error(int line, std::string_view message) {
         report(line, "", message);
     }
 
+    /*=== entry points ===*/
     void runFile(std::string_view filePath);
 
     void runPrompt();
 
 private:
-    bool run(std::string_view source);
+    void run(std::string_view source);
 };
 
+// todo: fix inline
+inline bool YareYareDawaRuntime::isError = false;
 
 #endif //YARE_YARE_DAWA_YAREYAREDAWARUNTIME_H
