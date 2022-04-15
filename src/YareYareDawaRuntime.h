@@ -9,6 +9,9 @@
 #include <string_view>
 #include <iostream>
 
+#include "scanning/Token.h"
+#include "scanning/TokenType.h"
+
 class YareYareDawaRuntime {
 public:
     /*=== error handling ===*/
@@ -22,6 +25,14 @@ public:
 
     static void error(int line, std::string_view message) {
         report(line, "", message);
+    }
+
+    static void error(const scanning::Token &token, std::string_view message) {
+        if (token.type == scanning::END_OF_FILE) {
+            report(token.line, " at end", message);
+        } else {
+            report(token.line, " at '" + token.lexeme + "'", message);
+        }
     }
 
     /*=== entry points ===*/

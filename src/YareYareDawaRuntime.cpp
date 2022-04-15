@@ -5,7 +5,9 @@
 #include "YareYareDawaRuntime.h"
 #include "scanning/Scanner.h"
 #include "scanning/Token.h"
+#include "parsing/Parser.h"
 #include "util.h"
+#include "ast/AstPrinter.h"
 
 void YareYareDawaRuntime::runFile(std::string_view filePath) {
     std::string content;
@@ -38,10 +40,15 @@ void YareYareDawaRuntime::run(std::string_view source) {
     auto scanner = scanning::Scanner(source);
     auto tokens = scanner.scanTokens();
 
-    // For now, just print the tokens.
     for (const auto &token: tokens) {
-        std::cout << token.toString() << std::endl;
+        std::cout << token.toString() << '\n';
     }
 
-    isError = true;
+    auto parser = parsing::Parser(tokens);
+    auto expression = parser.parse();
+
+    // Stop if there was a syntax error.
+    if (isError) return;
+
+    std::cout << ast::AstPrinter().print(expression);
 }
