@@ -2,8 +2,8 @@
 // Created by balik on 4/11/2022.
 //
 
-#include "YareYareDawaRuntime.h"
-#include "Scanner.h"
+#include "Errors.h"
+#include "scanning/Scanner.h"
 
 namespace scanning {
     std::vector<Token> scanning::Scanner::scanTokens() {
@@ -87,7 +87,7 @@ namespace scanning {
                 } else if (std::isalpha(c)) {
                     identifier();
                 } else {
-                    YareYareDawaRuntime::error(line, "Unexpected character.");
+                    Errors::error(line, "Unexpected character.");
                 }
                 break;
         }
@@ -100,7 +100,7 @@ namespace scanning {
         }
 
         if (isAtEnd()) {
-            YareYareDawaRuntime::error(line, "Unterminated string.");
+            Errors::error(line, "Unterminated string.");
             return;
         }
 

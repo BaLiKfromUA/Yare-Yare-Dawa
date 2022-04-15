@@ -13,6 +13,6 @@ int main(int argc, char *argv[]) {
         runtime.runPrompt();
     }
 
-    int returnCode = YareYareDawaRuntime::isError;
+    int returnCode = Errors::isError;
     return returnCode;
 }

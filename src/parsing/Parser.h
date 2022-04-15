@@ -8,7 +8,7 @@
 
 #include <vector>
 #include <cassert>
-#include "YareYareDawaRuntime.h"
+#include "Errors.h"
 #include "scanning/Token.h"
 #include "scanning/TokenType.h"
 #include "ast/Expression.h"
@@ -41,7 +41,7 @@ namespace parsing {
         /*== Helpers ==*/
 
         static ParseError error(const scanning::Token &token, std::string_view message) {
-            YareYareDawaRuntime::error(token, message);
+            Errors::error(token, message);
             return ParseError{""};
         }
 

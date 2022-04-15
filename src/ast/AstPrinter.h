@@ -18,7 +18,7 @@
  * USE IT ONLY FOR DEBUG OF YOUR AST
  */
 namespace ast {
-    class AstPrinter : public ExprVisitor {
+    class AstPrinter final : public ExprVisitor {
     public:
         std::string print(const std::shared_ptr<Expr> &expr) {
             return std::any_cast<std::string>(expr->accept(*this));
@@ -35,19 +35,20 @@ namespace ast {
         }
 
         std::any visitLiteralExpr(std::shared_ptr<Literal> expr) override {
+            using namespace std::string_literals;
             auto &value_type = expr->value.type();
 
             if (value_type == typeid(nullptr)) {
-                return "nil";
+                return "nil"s;
             } else if (value_type == typeid(std::string)) {
                 return std::any_cast<std::string>(expr->value);
             } else if (value_type == typeid(double)) {
                 return std::to_string(std::any_cast<double>(expr->value));
             } else if (value_type == typeid(bool)) {
-                return std::any_cast<bool>(expr->value) ? "true" : "false";
+                return std::any_cast<bool>(expr->value) ? "true"s : "false"s;
             }
 
-            return "Error in visitLiteralExpr: literal type not recognized.";
+            return "Error in visitLiteralExpr: literal type not recognized."s;
         }
 
         std::any visitUnaryExpr(std::shared_ptr<Unary> expr) override {

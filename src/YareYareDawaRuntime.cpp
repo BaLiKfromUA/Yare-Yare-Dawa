@@ -3,8 +3,8 @@
 //
 
 #include "YareYareDawaRuntime.h"
+#include "Errors.h"
 #include "scanning/Scanner.h"
-#include "scanning/Token.h"
 #include "parsing/Parser.h"
 #include "util.h"
 #include "ast/AstPrinter.h"
@@ -15,7 +15,7 @@ void YareYareDawaRuntime::runFile(std::string_view filePath) {
     try {
         content = util::getFileContentAsString(filePath);
     } catch (std::invalid_argument const &ex) {
-        isError = true;
+        Errors::isError = true;
         std::cerr << ex.what() << "\n";
         return;
     }
@@ -30,7 +30,7 @@ void YareYareDawaRuntime::runPrompt() {
         // todo: improve termination
         if (!std::getline(std::cin, line) || line == "exit") break;
         run(line);
-        isError = false;
+        Errors::isError = false;
     }
 
     std::cout << "Yare Yare Dawa...\n";
@@ -48,7 +48,11 @@ void YareYareDawaRuntime::run(std::string_view source) {
     auto expression = parser.parse();
 
     // Stop if there was a syntax error.
-    if (isError) return;
+    if (Errors::isError) return;
+    // Stop if there was a runtime error.
+    if (Errors::hadRuntimeError) return;
 
-    std::cout << ast::AstPrinter().print(expression);
+    std::cout << ast::AstPrinter().print(expression) << '\n';
+
+    _interpreter.interpret(expression);
 }
