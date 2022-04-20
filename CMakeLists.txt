@@ -1,17 +1,15 @@
 cmake_minimum_required(VERSION 3.21)
 
 set(PROJECT_NAME Yare_Yare_Dawa)
-set(TEST_NAME ${PROJECT_NAME}_test)
 
 project(${PROJECT_NAME} C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
-file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
-file(GLOB_RECURSE INCLUDES ${PROJECT_SOURCE_DIR}/src/*.h*)
-
-add_executable(${PROJECT_NAME} ${INCLUDES} ${SOURCES})
-target_include_directories(${PROJECT_NAME} PRIVATE src)
+#! Be default -- build release version if not specified otherwise.
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif ()
 
 ##########################################################
 # Google test
@@ -25,23 +23,8 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-enable_testing()
+# modules enabling
+include_directories(src)
 
-# todo: improve
-add_executable(
-        ${TEST_NAME}
-        ${INCLUDES} ${SOURCES}
-        test/scanning/scanner_test.cpp
-)
-
-target_include_directories(${TEST_NAME} PRIVATE src)
-
-target_link_libraries(
-        ${TEST_NAME}
-        gtest_main
-)
-
-include(GoogleTest)
-gtest_discover_tests(${TEST_NAME})
-
-add_test(${TEST_NAME} ${TEST_NAME})
+add_subdirectory(src)
+add_subdirectory(test)
