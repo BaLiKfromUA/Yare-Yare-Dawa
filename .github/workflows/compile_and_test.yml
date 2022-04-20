@@ -1,0 +1,51 @@
+name: Simple compilation and testing
+
+on:
+  push:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - master
+
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {
+            name: "Ubuntu Latest GCC",
+            os: ubuntu-latest,
+            cc: "gcc", cxx: "g++"
+          }
+          - {
+            name: "Ubuntu Latest Clang",
+            os: ubuntu-latest,
+            cc: "clang", cxx: "clang++"
+          }
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: sed 's/\r$//' dependencies/apt.txt | sed 's/#.*//' | xargs sudo apt install -y
+
+      - name: Configure
+        run: CC=${{ matrix.cc }} CXX=${{ matrix.cxx }} cmake -G"Unix Makefiles" -Bbuild
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        working-directory: ./build
+        run: GTEST_OUTPUT=xml:test-results/ GTEST_COLOR=1 ctest -V
+
+      - name: Upload test results in case of failure
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: test_results_xml
+          path: ./build/test-results/**/*.xml
