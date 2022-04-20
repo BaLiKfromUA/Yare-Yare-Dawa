@@ -1,7 +1,5 @@
 set(TESTS ${PROJECT_NAME}_test)
 
-enable_testing()
-
 file(GLOB_RECURSE TESTS_SOURCES *.cpp)
 
 add_executable(${TESTS} ${TESTS_SOURCES})
