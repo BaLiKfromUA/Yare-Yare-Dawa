@@ -155,12 +155,12 @@ namespace parsing {
 
         // expression     → assignment ;
         std::shared_ptr<ast::Expr> expression() {
-            return equality();
+            return assignment();
         }
 
-        // assignment     → IDENTIFIER "=" assignment | equality ;
+        // assignment     → IDENTIFIER "=" assignment | logic_or ;
         std::shared_ptr<ast::Expr> assignment() {
-            auto expr = equality();
+            auto expr = orExpression();
 
             if (match(scanning::EQUAL)) {
                 auto equals = previous();
@@ -176,6 +176,12 @@ namespace parsing {
 
             return expr;
         }
+
+        // logic_or       → logic_and ( "or" logic_and )* ;
+        std::shared_ptr<ast::Expr> orExpression();
+
+        // logic_and      → equality ( "and" equality )* ;
+        std::shared_ptr<ast::Expr> andExpression();
 
         // equality       → comparison ( ( "!=" | "==" ) comparison )* ;
         std::shared_ptr<ast::Expr> equality();

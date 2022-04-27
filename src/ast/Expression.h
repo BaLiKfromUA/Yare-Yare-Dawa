@@ -26,6 +26,7 @@ namespace ast {
 
     class Variable;
 
+    class Logical;
 
     class ExprVisitor {
     public:
@@ -40,6 +41,8 @@ namespace ast {
         virtual std::any visitUnaryExpr(const std::shared_ptr<Unary> &expr) = 0;
 
         virtual std::any visitVariableExpr(const std::shared_ptr<Variable> &expr) = 0;
+
+        virtual std::any visitLogicalExpr(const std::shared_ptr<Logical> &expr) = 0;
 
         virtual ~ExprVisitor() = default;
     };
@@ -69,6 +72,20 @@ namespace ast {
 
         std::any accept(ExprVisitor &visitor) override {
             return visitor.visitBinaryExpr(shared_from_this());
+        }
+
+        const std::shared_ptr<Expr> left;
+        const Token op;
+        const std::shared_ptr<Expr> right;
+    };
+
+    class Logical final : public Expr, public std::enable_shared_from_this<Logical> {
+    public:
+        Logical(std::shared_ptr<Expr> left, Token op, std::shared_ptr<Expr> right)
+                : left{std::move(left)}, op{std::move(op)}, right{std::move(right)} {}
+
+        std::any accept(ExprVisitor &visitor) override {
+            return visitor.visitLogicalExpr(shared_from_this());
         }
 
         const std::shared_ptr<Expr> left;

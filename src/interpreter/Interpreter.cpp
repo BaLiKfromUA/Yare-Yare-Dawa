@@ -169,4 +169,16 @@ namespace interpreter {
     std::any Interpreter::visitVariableExpr(const std::shared_ptr<ast::Variable> &expr) {
         return environment->get(expr->name);
     }
+
+    std::any Interpreter::visitLogicalExpr(const std::shared_ptr<ast::Logical> &expr) {
+        std::any left = evaluate(expr->left);
+
+        if (expr->op.type == scanning::OR) {
+            if (isTruthy(left)) return left;
+        } else {
+            if (!isTruthy(left)) return left;
+        }
+
+        return evaluate(expr->right);
+    }
 }

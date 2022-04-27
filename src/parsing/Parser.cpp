@@ -108,4 +108,28 @@ namespace parsing {
             }
         }
     }
+
+    std::shared_ptr<ast::Expr> Parser::orExpression() {
+        std::shared_ptr<ast::Expr> expr = andExpression();
+
+        while (match(scanning::OR)) {
+            auto op = previous();
+            auto right = andExpression();
+            expr = std::make_shared<ast::Logical>(expr, std::move(op), right);
+        }
+
+        return expr;
+    }
+
+    std::shared_ptr<ast::Expr> Parser::andExpression() {
+        auto expr = equality();
+
+        while (match(scanning::AND)) {
+            auto op = previous();
+            auto right = equality();
+            expr = std::make_shared<ast::Logical>(expr, std::move(op), right);
+        }
+
+        return expr;
+    }
 }

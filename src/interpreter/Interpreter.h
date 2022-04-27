@@ -64,6 +64,8 @@ namespace interpreter {
 
         std::any visitVarStmt(const std::shared_ptr<ast::Var> &stmt) override;
 
+        std::any visitLogicalExpr(const std::shared_ptr<ast::Logical> &expr) override;
+
     private:
         void executeBlock(const std::vector<std::shared_ptr<ast::Stmt>> &statements,
                           const std::shared_ptr<Environment> &env);

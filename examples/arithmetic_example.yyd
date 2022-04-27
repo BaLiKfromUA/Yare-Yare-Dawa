@@ -3,7 +3,7 @@ var b = a - 21;
 print a; // 42
 print b; // 21
 
-var a = b * 3;
+a = b * 3;
 print a; // 63
 print a / b; // 3
 print b / a; // 0.3333333
