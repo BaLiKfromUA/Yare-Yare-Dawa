@@ -11,9 +11,8 @@
 #include <vector>
 #include "scanning/Token.h"
 
-using scanning::Token;
-
 namespace ast {
+    using scanning::Token;
 
     class Binary;
 
@@ -26,13 +25,15 @@ namespace ast {
 
     class ExprVisitor {
     public:
-        virtual std::any visitBinaryExpr(std::shared_ptr<Binary> expr) = 0;
+        virtual std::any visitBinaryExpr(const std::shared_ptr<Binary> &expr) = 0;
 
-        virtual std::any visitGroupingExpr(std::shared_ptr<Grouping> expr) = 0;
+        virtual std::any visitGroupingExpr(const std::shared_ptr<Grouping> &expr) = 0;
 
-        virtual std::any visitLiteralExpr(std::shared_ptr<Literal> expr) = 0;
+        virtual std::any visitLiteralExpr(const std::shared_ptr<Literal> &expr) = 0;
 
-        virtual std::any visitUnaryExpr(std::shared_ptr<Unary> expr) = 0;
+        virtual std::any visitUnaryExpr(const std::shared_ptr<Unary> &expr) = 0;
+
+        virtual ~ExprVisitor() = default;
     };
 
     class Expr {

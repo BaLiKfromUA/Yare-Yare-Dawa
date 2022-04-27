@@ -12,6 +12,7 @@
 #include "scanning/Token.h"
 #include "scanning/TokenType.h"
 #include "ast/Expression.h"
+#include "ast/Statement.h"
 
 
 namespace parsing {
@@ -29,12 +30,15 @@ namespace parsing {
         explicit Parser(const std::vector<scanning::Token> &tokens)
                 : tokens{tokens} {}
 
-        std::shared_ptr<ast::Expr> parse() {
-            try {
-                return expression();
-            } catch (const ParseError &ignored) {
-                return nullptr;
+        // program        → statement* EOF ;
+        std::vector<std::shared_ptr<ast::Stmt>> parse() {
+            std::vector<std::shared_ptr<ast::Stmt>> statements;
+            while (!isAtEnd()) {
+                statements.push_back(statement());
+                //statements.push_back(declaration());
             }
+
+            return statements;
         }
 
     private:
@@ -89,6 +93,27 @@ namespace parsing {
         }
 
         /*== Grammar ==*/
+
+        // statement      → exprStmt | printStmt ;
+        std::shared_ptr<ast::Stmt> statement() {
+            if (match(scanning::PRINT)) return printStatement();
+
+            return expressionStatement();
+        }
+
+        // printStmt      → "print" expression ";" ;
+        std::shared_ptr<ast::Stmt> printStatement() {
+            std::shared_ptr<ast::Expr> value = expression();
+            consume(scanning::SEMICOLON, "Expect ';' after value.");
+            return std::make_shared<ast::Print>(value);
+        }
+
+        // exprStmt       → expression ";" ;
+        std::shared_ptr<ast::Stmt> expressionStatement() {
+            std::shared_ptr<ast::Expr> expr = expression();
+            consume(scanning::SEMICOLON, "Expect ';' after expression.");
+            return std::make_shared<ast::Expression>(expr);
+        }
 
         // expression     → equality ;
         std::shared_ptr<ast::Expr> expression() {

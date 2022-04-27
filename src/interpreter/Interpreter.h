@@ -11,15 +11,17 @@
 #include "scanning/Token.h"
 #include "scanning/TokenType.h"
 #include "ast/Expression.h"
+#include "ast/Statement.h"
 
 
 namespace interpreter {
-    class Interpreter final : public ast::ExprVisitor {
+    class Interpreter final : public ast::ExprVisitor, public ast::StmtVisitor {
     public:
-        void interpret(const std::shared_ptr<ast::Expr> &expression) {
+        void interpret(const std::vector<std::shared_ptr<ast::Stmt>> &statements) {
             try {
-                auto value = evaluate(expression);
-                std::cout << stringify(value) << "\n";
+                for (const std::shared_ptr<ast::Stmt> &statement: statements) {
+                    execute(statement);
+                }
             } catch (RuntimeError &error) {
                 Errors::errorRuntime(error);
             }
@@ -30,18 +32,30 @@ namespace interpreter {
             return expr->accept(*this);
         }
 
+        void execute(const std::shared_ptr<ast::Stmt> &stmt) {
+            stmt->accept(*this);
+        }
+
     public:
-        std::any visitGroupingExpr(std::shared_ptr<ast::Grouping> expr) override {
+        std::any visitGroupingExpr(const std::shared_ptr<ast::Grouping> &expr) override {
             return evaluate(expr->expression);
         }
 
-        std::any visitLiteralExpr(std::shared_ptr<ast::Literal> expr) override {
+        std::any visitLiteralExpr(const std::shared_ptr<ast::Literal> &expr) override {
             return expr->value;
         }
 
-        std::any visitUnaryExpr(std::shared_ptr<ast::Unary> expr) override;
+        std::any visitUnaryExpr(const std::shared_ptr<ast::Unary> &expr) override;
 
-        std::any visitBinaryExpr(std::shared_ptr<ast::Binary> expr) override;
+        std::any visitBinaryExpr(const std::shared_ptr<ast::Binary> &expr) override;
+
+        std::any visitBlockStmt(const std::shared_ptr<ast::Block> &stmt) override;
+
+        std::any visitExpressionStmt(const std::shared_ptr<ast::Expression> &stmt) override;
+
+        std::any visitPrintStmt(const std::shared_ptr<ast::Print> &stmt) override;
+
+        std::any visitVarStmt(const std::shared_ptr<ast::Var> &stmt) override;
 
     private:
 

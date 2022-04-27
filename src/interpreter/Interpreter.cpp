@@ -6,7 +6,7 @@
 
 namespace interpreter {
 
-    std::any Interpreter::visitUnaryExpr(std::shared_ptr<ast::Unary> expr) {
+    std::any Interpreter::visitUnaryExpr(const std::shared_ptr<ast::Unary> &expr) {
         std::any right = evaluate(expr->right);
 
         switch (expr->op.type) {
@@ -21,7 +21,7 @@ namespace interpreter {
         }
     }
 
-    std::any Interpreter::visitBinaryExpr(std::shared_ptr<ast::Binary> expr) {
+    std::any Interpreter::visitBinaryExpr(const std::shared_ptr<ast::Binary> &expr) {
         std::any left = evaluate(expr->left);
         std::any right = evaluate(expr->right);
 
@@ -114,5 +114,24 @@ namespace interpreter {
         }
 
         return "Error in stringify: object type not recognized."s;
+    }
+
+    std::any Interpreter::visitBlockStmt(const std::shared_ptr<ast::Block> &stmt) {
+        return std::any(); // todo:
+    }
+
+    std::any Interpreter::visitExpressionStmt(const std::shared_ptr<ast::Expression> &stmt) {
+        evaluate(stmt->expression);
+        return {};
+    }
+
+    std::any Interpreter::visitPrintStmt(const std::shared_ptr<ast::Print> &stmt) {
+        std::any value = evaluate(stmt->expression);
+        std::cout << stringify(value) << "\n"; // todo: maybe create println later??
+        return {};
+    }
+
+    std::any Interpreter::visitVarStmt(const std::shared_ptr<ast::Var> &stmt) {
+        return std::any(); // todo:
     }
 }

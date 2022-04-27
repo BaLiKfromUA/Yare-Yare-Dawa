@@ -24,17 +24,16 @@ namespace ast {
             return std::any_cast<std::string>(expr->accept(*this));
         }
 
-        std::any visitBinaryExpr(std::shared_ptr<Binary> expr) override {
+        std::any visitBinaryExpr(const std::shared_ptr<Binary> &expr) override {
             return parenthesize(expr->op.lexeme,
                                 expr->left, expr->right);
         }
 
-        std::any visitGroupingExpr(
-                std::shared_ptr<Grouping> expr) override {
+        std::any visitGroupingExpr(const std::shared_ptr<Grouping> &expr) override {
             return parenthesize("group", expr->expression);
         }
 
-        std::any visitLiteralExpr(std::shared_ptr<Literal> expr) override {
+        std::any visitLiteralExpr(const std::shared_ptr<Literal> &expr) override {
             using namespace std::string_literals;
             auto &value_type = expr->value.type();
 
@@ -51,7 +50,7 @@ namespace ast {
             return "Error in visitLiteralExpr: literal type not recognized."s;
         }
 
-        std::any visitUnaryExpr(std::shared_ptr<Unary> expr) override {
+        std::any visitUnaryExpr(const std::shared_ptr<Unary> &expr) override {
             return parenthesize(expr->op.lexeme, expr->right);
         }
 
