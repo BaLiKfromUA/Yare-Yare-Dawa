@@ -30,12 +30,11 @@ namespace parsing {
         explicit Parser(const std::vector<scanning::Token> &tokens)
                 : tokens{tokens} {}
 
-        // program        → statement* EOF ;
+        // program        → declaration* EOF ;
         std::vector<std::shared_ptr<ast::Stmt>> parse() {
             std::vector<std::shared_ptr<ast::Stmt>> statements;
             while (!isAtEnd()) {
-                statements.push_back(statement());
-                //statements.push_back(declaration());
+                statements.push_back(declaration());
             }
 
             return statements;
@@ -94,11 +93,50 @@ namespace parsing {
 
         /*== Grammar ==*/
 
-        // statement      → exprStmt | printStmt ;
+        // declaration    → varDecl | statement ;
+        std::shared_ptr<ast::Stmt> declaration() {
+            try {
+                if (match(scanning::VAR)) return varDeclaration();
+
+                return statement();
+            } catch (const ParseError &ignored) {
+                synchronize();
+                return nullptr;
+            }
+        }
+
+        // varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+        std::shared_ptr<ast::Stmt> varDeclaration() {
+            auto name = consume(scanning::IDENTIFIER, "Expect variable name.");
+
+            std::shared_ptr<ast::Expr> initializer = nullptr;
+            if (match(scanning::EQUAL)) {
+                initializer = expression();
+            }
+
+            consume(scanning::SEMICOLON, "Expect ';' after variable declaration.");
+            return std::make_shared<ast::Var>(std::move(name), initializer);
+        }
+
+
+        // statement      → exprStmt | printStmt | block ;
         std::shared_ptr<ast::Stmt> statement() {
             if (match(scanning::PRINT)) return printStatement();
+            if (match(scanning::LEFT_BRACE)) return std::make_shared<ast::Block>(block());
 
             return expressionStatement();
+        }
+
+        // block          → "{" declaration* "}" ;
+        std::vector<std::shared_ptr<ast::Stmt>> block() {
+            std::vector<std::shared_ptr<ast::Stmt>> statements;
+
+            while (!check(scanning::RIGHT_BRACE) && !isAtEnd()) {
+                statements.push_back(declaration());
+            }
+
+            consume(scanning::RIGHT_BRACE, "Expect '}' after block.");
+            return statements;
         }
 
         // printStmt      → "print" expression ";" ;
@@ -115,9 +153,28 @@ namespace parsing {
             return std::make_shared<ast::Expression>(expr);
         }
 
-        // expression     → equality ;
+        // expression     → assignment ;
         std::shared_ptr<ast::Expr> expression() {
             return equality();
+        }
+
+        // assignment     → IDENTIFIER "=" assignment | equality ;
+        std::shared_ptr<ast::Expr> assignment() {
+            auto expr = equality();
+
+            if (match(scanning::EQUAL)) {
+                auto equals = previous();
+                auto value = assignment();
+
+                if (auto e = dynamic_cast<ast::Variable *>(expr.get())) {
+                    auto name = e->name;
+                    return std::make_shared<ast::Assign>(std::move(name), value);
+                }
+
+                error(equals, "Invalid assignment target.");
+            }
+
+            return expr;
         }
 
         // equality       → comparison ( ( "!=" | "==" ) comparison )* ;
@@ -135,7 +192,7 @@ namespace parsing {
         // unary          → ( "!" | "-" ) unary | primary ;
         std::shared_ptr<ast::Expr> unary();
 
-        // primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
+        // primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
         std::shared_ptr<ast::Expr> primary();
 
     };

@@ -74,6 +74,10 @@ namespace parsing {
             return std::make_shared<ast::Literal>(previous().literal);
         }
 
+        if (match(scanning::IDENTIFIER)) {
+            return std::make_shared<ast::Variable>(previous());
+        }
+
         if (match(scanning::LEFT_PAREN)) {
             std::shared_ptr<ast::Expr> expr = expression();
             consume(scanning::RIGHT_PAREN, "Expect ')' after expression.");

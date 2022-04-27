@@ -117,7 +117,26 @@ namespace interpreter {
     }
 
     std::any Interpreter::visitBlockStmt(const std::shared_ptr<ast::Block> &stmt) {
-        return std::any(); // todo:
+        executeBlock(stmt->statements, std::make_shared<Environment>(environment));
+        return {};
+    }
+
+    void Interpreter::executeBlock(const std::vector<std::shared_ptr<ast::Stmt>> &statements,
+                                   const std::shared_ptr<Environment> &env) {
+
+        std::shared_ptr<Environment> previous = this->environment;
+        try {
+            this->environment = env;
+
+            for (const std::shared_ptr<ast::Stmt> &statement: statements) {
+                execute(statement);
+            }
+        } catch (...) { // no finally blocks in C++ >:(
+            this->environment = previous;
+            throw;
+        }
+
+        this->environment = previous;
     }
 
     std::any Interpreter::visitExpressionStmt(const std::shared_ptr<ast::Expression> &stmt) {
@@ -132,6 +151,22 @@ namespace interpreter {
     }
 
     std::any Interpreter::visitVarStmt(const std::shared_ptr<ast::Var> &stmt) {
-        return std::any(); // todo:
+        std::any value = nullptr;
+        if (stmt->initializer != nullptr) {
+            value = evaluate(stmt->initializer);
+        }
+
+        environment->define(stmt->name.lexeme, std::move(value));
+        return {};
+    }
+
+    std::any Interpreter::visitAssignExpr(const std::shared_ptr<ast::Assign> &expr) {
+        std::any value = evaluate(expr->value);
+        environment->assign(expr->name, value);
+        return value;
+    }
+
+    std::any Interpreter::visitVariableExpr(const std::shared_ptr<ast::Variable> &expr) {
+        return environment->get(expr->name);
     }
 }

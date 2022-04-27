@@ -1,0 +1,13 @@
+print 1 == 2;         // false
+print "cat" != "dog"; // true
+print 314 == "pi"; // false
+print 123 == "123"; // false (NO IMPLICIT OPERATIONS)
+
+print !true;  // false
+print !false; // true
+
+print (true and false); // false
+print (true and true);  // true
+
+print (false or false); // false
+print (true or false);  // true

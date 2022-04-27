@@ -1,0 +1,14 @@
+var a = 42;
+var b = a - 21;
+print a; // 42
+print b; // 21
+
+var a = b * 3;
+print a; // 63
+print a / b; // 3
+print b / a; // 0.3333333
+
+print 2 + 2 * 3; // 8
+print (2 + 2) * 3; // 12
+print 0 / 0; // nan
+print 42 / 0; // inf

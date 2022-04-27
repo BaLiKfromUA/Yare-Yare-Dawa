@@ -12,10 +12,13 @@
 #include "scanning/TokenType.h"
 #include "ast/Expression.h"
 #include "ast/Statement.h"
+#include "Environment.h"
 
 
 namespace interpreter {
     class Interpreter final : public ast::ExprVisitor, public ast::StmtVisitor {
+        std::shared_ptr<Environment> environment{new Environment};
+
     public:
         void interpret(const std::vector<std::shared_ptr<ast::Stmt>> &statements) {
             try {
@@ -49,6 +52,10 @@ namespace interpreter {
 
         std::any visitBinaryExpr(const std::shared_ptr<ast::Binary> &expr) override;
 
+        std::any visitAssignExpr(const std::shared_ptr<ast::Assign> &expr) override;
+
+        std::any visitVariableExpr(const std::shared_ptr<ast::Variable> &expr) override;
+
         std::any visitBlockStmt(const std::shared_ptr<ast::Block> &stmt) override;
 
         std::any visitExpressionStmt(const std::shared_ptr<ast::Expression> &stmt) override;
@@ -58,6 +65,9 @@ namespace interpreter {
         std::any visitVarStmt(const std::shared_ptr<ast::Var> &stmt) override;
 
     private:
+        void executeBlock(const std::vector<std::shared_ptr<ast::Stmt>> &statements,
+                          const std::shared_ptr<Environment> &env);
+
 
         static void checkNumberOperand(const scanning::Token &op,
                                        const std::any &operand) {

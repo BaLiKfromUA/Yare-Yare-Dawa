@@ -14,6 +14,8 @@
 namespace ast {
     using scanning::Token;
 
+    class Assign;
+
     class Binary;
 
     class Grouping;
@@ -22,9 +24,13 @@ namespace ast {
 
     class Unary;
 
+    class Variable;
+
 
     class ExprVisitor {
     public:
+        virtual std::any visitAssignExpr(const std::shared_ptr<Assign> &expr) = 0;
+
         virtual std::any visitBinaryExpr(const std::shared_ptr<Binary> &expr) = 0;
 
         virtual std::any visitGroupingExpr(const std::shared_ptr<Grouping> &expr) = 0;
@@ -33,12 +39,27 @@ namespace ast {
 
         virtual std::any visitUnaryExpr(const std::shared_ptr<Unary> &expr) = 0;
 
+        virtual std::any visitVariableExpr(const std::shared_ptr<Variable> &expr) = 0;
+
         virtual ~ExprVisitor() = default;
     };
 
     class Expr {
     public:
         virtual std::any accept(ExprVisitor &visitor) = 0;
+    };
+
+    class Assign : public Expr, public std::enable_shared_from_this<Assign> {
+    public:
+        Assign(Token name, std::shared_ptr<Expr> value)
+                : name{std::move(name)}, value{std::move(value)} {}
+
+        std::any accept(ExprVisitor &visitor) override {
+            return visitor.visitAssignExpr(shared_from_this());
+        }
+
+        const Token name;
+        const std::shared_ptr<Expr> value;
     };
 
     class Binary final : public Expr, public std::enable_shared_from_this<Binary> {
@@ -90,6 +111,18 @@ namespace ast {
         }
 
         const std::any value;
+    };
+
+    class Variable final : public Expr, public std::enable_shared_from_this<Variable> {
+    public:
+        explicit Variable(Token name)
+                : name{std::move(name)} {}
+
+        std::any accept(ExprVisitor &visitor) override {
+            return visitor.visitVariableExpr(shared_from_this());
+        }
+
+        const Token name;
     };
 }
 
