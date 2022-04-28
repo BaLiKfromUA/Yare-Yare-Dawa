@@ -2,13 +2,13 @@
 // Created by balik on 4/8/2022.
 //
 
-#include "YareYareDawaRuntime.h"
+#include "YareYareDawaManager.h"
 #include "Errors.h"
 #include "scanning/Scanner.h"
 #include "parsing/Parser.h"
 #include "util.h"
 
-void YareYareDawaRuntime::runFile(std::string_view filePath) {
+void YareYareDawaManager::runFile(std::string_view filePath) {
     std::string content;
 
     try {
@@ -22,7 +22,7 @@ void YareYareDawaRuntime::runFile(std::string_view filePath) {
     run(content);
 }
 
-void YareYareDawaRuntime::runPrompt() {
+void YareYareDawaManager::runPrompt() {
     while (true) {
         std::cout << "> ";
         std::string line;
@@ -35,7 +35,7 @@ void YareYareDawaRuntime::runPrompt() {
     std::cout << "Yare Yare Dawa...\n";
 }
 
-void YareYareDawaRuntime::run(std::string_view source) {
+void YareYareDawaManager::run(std::string_view source) {
     auto scanner = scanning::Scanner(source);
     auto tokens = scanner.scanTokens();
 

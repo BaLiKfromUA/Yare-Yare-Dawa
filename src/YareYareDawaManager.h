@@ -2,8 +2,8 @@
 // Created by balik on 4/8/2022.
 //
 
-#ifndef YARE_YARE_DAWA_YAREYAREDAWARUNTIME_H
-#define YARE_YARE_DAWA_YAREYAREDAWARUNTIME_H
+#ifndef YARE_YARE_DAWA_YAREYAREDAWAMANAGER_H
+#define YARE_YARE_DAWA_YAREYAREDAWAMANAGER_H
 
 
 #include <string_view>
@@ -14,7 +14,7 @@
 #include "interpreter/Interpreter.h"
 
 
-class YareYareDawaRuntime {
+class YareYareDawaManager {
 public:
     /*=== entry points ===*/
     void runFile(std::string_view filePath);
@@ -27,4 +27,4 @@ private:
     void run(std::string_view source);
 };
 
-#endif //YARE_YARE_DAWA_YAREYAREDAWARUNTIME_H
+#endif //YARE_YARE_DAWA_YAREYAREDAWAMANAGER_H

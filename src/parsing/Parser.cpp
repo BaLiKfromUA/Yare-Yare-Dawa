@@ -132,4 +132,72 @@ namespace parsing {
 
         return expr;
     }
+
+    std::shared_ptr<ast::Stmt> Parser::ifStatement() {
+        consume(scanning::LEFT_PAREN, "Expect '(' after 'if'.");
+        auto condition = expression();
+        consume(scanning::RIGHT_PAREN, "Expect ')' after if condition.");
+
+        auto thenBranch = statement();
+        std::shared_ptr<ast::Stmt> elseBranch = nullptr;
+        if (match(scanning::ELSE)) {
+            elseBranch = statement();
+        }
+
+        return std::make_shared<ast::If>(condition, thenBranch, elseBranch);
+    }
+
+    std::shared_ptr<ast::Stmt> Parser::whileStatement() {
+        consume(scanning::LEFT_PAREN, "Expect '(' after 'while'.");
+        auto condition = expression();
+        consume(scanning::RIGHT_PAREN, "Expect ')' after condition.");
+        auto body = statement();
+
+        return std::make_shared<ast::While>(condition, body);
+    }
+
+    std::shared_ptr<ast::Stmt> Parser::forStatement() {
+        consume(scanning::LEFT_PAREN, "Expect '(' after 'for'.");
+
+        std::shared_ptr<ast::Stmt> initializer;
+        if (match(scanning::SEMICOLON)) {
+            initializer = nullptr;
+        } else if (match(scanning::VAR)) {
+            initializer = varDeclaration();
+        } else {
+            initializer = expressionStatement();
+        }
+
+        std::shared_ptr<ast::Expr> condition = nullptr;
+        if (!check(scanning::SEMICOLON)) {
+            condition = expression();
+        }
+        consume(scanning::SEMICOLON, "Expect ';' after loop condition.");
+
+        std::shared_ptr<ast::Expr> increment = nullptr;
+        if (!check(scanning::RIGHT_PAREN)) {
+            increment = expression();
+        }
+        consume(scanning::RIGHT_PAREN, "Expect ')' after for clauses.");
+        std::shared_ptr<ast::Stmt> body = statement();
+
+        if (increment != nullptr) {
+            body = std::make_shared<ast::Block>(
+                    std::vector<std::shared_ptr<ast::Stmt>>{
+                            body,
+                            std::make_shared<ast::Expression>(increment)});
+        }
+
+        if (condition == nullptr) {
+            condition = std::make_shared<ast::Literal>(true);
+        }
+        body = std::make_shared<ast::While>(condition, body);
+
+        if (initializer != nullptr) {
+            body = std::make_shared<ast::Block>(
+                    std::vector<std::shared_ptr<ast::Stmt>>{initializer, body});
+        }
+
+        return body;
+    }
 }

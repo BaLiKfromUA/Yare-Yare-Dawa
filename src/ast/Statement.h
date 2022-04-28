@@ -24,6 +24,10 @@ namespace ast {
 
     class Var;
 
+    class If;
+
+    class While;
+
     class StmtVisitor {
     public:
         virtual std::any visitBlockStmt(const std::shared_ptr<Block> &stmt) = 0;
@@ -33,6 +37,10 @@ namespace ast {
         virtual std::any visitPrintStmt(const std::shared_ptr<Print> &stmt) = 0;
 
         virtual std::any visitVarStmt(const std::shared_ptr<Var> &stmt) = 0;
+
+        virtual std::any visitIfStmt(const std::shared_ptr<If> &stmt) = 0;
+
+        virtual std::any visitWhileStmt(const std::shared_ptr<While> &stmt) = 0;
 
         virtual ~StmtVisitor() = default;
     };
@@ -89,6 +97,34 @@ namespace ast {
 
         const Token name;
         const std::shared_ptr<Expr> initializer;
+    };
+
+    class If : public Stmt, public std::enable_shared_from_this<If> {
+    public:
+        If(std::shared_ptr<Expr> condition, std::shared_ptr<Stmt> thenBranch, std::shared_ptr<Stmt> elseBranch)
+                : condition{std::move(condition)}, thenBranch{std::move(thenBranch)},
+                  elseBranch{std::move(elseBranch)} {}
+
+        std::any accept(StmtVisitor &visitor) override {
+            return visitor.visitIfStmt(shared_from_this());
+        }
+
+        const std::shared_ptr<Expr> condition;
+        const std::shared_ptr<Stmt> thenBranch;
+        const std::shared_ptr<Stmt> elseBranch;
+    };
+
+    class While : public Stmt, public std::enable_shared_from_this<While> {
+    public:
+        While(std::shared_ptr<Expr> condition, std::shared_ptr<Stmt> body)
+                : condition{std::move(condition)}, body{std::move(body)} {}
+
+        std::any accept(StmtVisitor &visitor) override {
+            return visitor.visitWhileStmt(shared_from_this());
+        }
+
+        const std::shared_ptr<Expr> condition;
+        const std::shared_ptr<Stmt> body;
     };
 }
 #endif //YARE_YARE_DAWA_STATEMENT_H

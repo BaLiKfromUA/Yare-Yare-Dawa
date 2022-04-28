@@ -181,4 +181,20 @@ namespace interpreter {
 
         return evaluate(expr->right);
     }
+
+    std::any Interpreter::visitIfStmt(const std::shared_ptr<ast::If> &stmt) {
+        if (isTruthy(evaluate(stmt->condition))) {
+            execute(stmt->thenBranch);
+        } else if (stmt->elseBranch != nullptr) {
+            execute(stmt->elseBranch);
+        }
+        return {};
+    }
+
+    std::any Interpreter::visitWhileStmt(const std::shared_ptr<ast::While> &stmt) {
+        while (isTruthy(evaluate(stmt->condition))) {
+            execute(stmt->body);
+        }
+        return {};
+    }
 }

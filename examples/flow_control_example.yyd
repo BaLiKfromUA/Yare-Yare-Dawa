@@ -1,0 +1,33 @@
+var i = 1;
+
+if (i < 2) {
+    print "If branch";
+} else {
+    print "Else branch";
+}
+
+i = 2;
+
+if (i < 2) {
+    print "If branch";
+} else {
+    print "Else branch";
+}
+
+{
+  print "--------------WHILE LOOP----------------";
+
+  var i = 0;
+  while (i < 10) {
+    print i;
+    i = i + 1;
+  }
+
+  print "--------------FOR LOOP----------------";
+
+  for (var i = 0; i < 10; i = i + 1) print i;
+
+  var i = 8;
+
+  for (; i >= 0; i = i - 1) print i;
+}

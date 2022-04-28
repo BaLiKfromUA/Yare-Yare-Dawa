@@ -1,8 +1,8 @@
 #include <iostream>
-#include "YareYareDawaRuntime.h"
+#include "YareYareDawaManager.h"
 
 int main(int argc, char *argv[]) {
-    YareYareDawaRuntime runtime;
+    YareYareDawaManager runtime;
 
     if (argc > 2) {
         std::cout << "Usage: yyd [script_name.yyd]\n";

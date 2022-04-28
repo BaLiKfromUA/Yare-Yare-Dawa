@@ -119,13 +119,26 @@ namespace parsing {
         }
 
 
-        // statement      → exprStmt | printStmt | block ;
+        // statement      → exprStmt | ifStmt | whileStmt | forStmt | printStmt | block ;
         std::shared_ptr<ast::Stmt> statement() {
+            if (match(scanning::IF)) return ifStatement();
+            if (match(scanning::WHILE)) return whileStatement();
+            if (match(scanning::FOR)) return forStatement();
             if (match(scanning::PRINT)) return printStatement();
             if (match(scanning::LEFT_BRACE)) return std::make_shared<ast::Block>(block());
 
+
             return expressionStatement();
         }
+
+        // whileStmt      → "while" "(" expression ")" statement ;
+        std::shared_ptr<ast::Stmt> whileStatement();
+
+        // forStmt        → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";"expression? ")" statement ;
+        std::shared_ptr<ast::Stmt> forStatement();
+
+        // ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
+        std::shared_ptr<ast::Stmt> ifStatement();
 
         // block          → "{" declaration* "}" ;
         std::vector<std::shared_ptr<ast::Stmt>> block() {
