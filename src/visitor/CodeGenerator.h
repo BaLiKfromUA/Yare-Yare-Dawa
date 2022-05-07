@@ -79,6 +79,18 @@ namespace visitor {
             llvm::Function::Create(FT, llvm::Function::ExternalLinkage, name, *module);
         }
 
+        static llvm::Value *recastExpression(std::any expression) {
+            if (expression.type() == typeid(llvm::Value *)) {
+                return std::any_cast<llvm::Value *>(expression);
+            } else if (expression.type() == typeid(llvm::ConstantFP *)) {
+                auto tmp = std::any_cast<llvm::ConstantFP *>(expression);
+                return static_cast<llvm::Value *>(tmp);
+            }
+
+            //todo: throw exception
+            return nullptr;
+        }
+
     public:
         CodeGenerator() {
             // Open a new context and module.
@@ -93,7 +105,7 @@ namespace visitor {
             startFunction("__yyd_start");
             // add standard lib
             // prototype for print and scan functions
-            llvm::Type *Tys[] = {getDoubleTy()};// todo: make double
+            llvm::Type *Tys[] = {getDoubleTy()};
             llvm::FunctionType *FTPrint = llvm::FunctionType::get(getVoidTy(), Tys, /* va args? */ false);
             // creating decls for modules
             createFnDecl(FTPrint, "__yyd_print");

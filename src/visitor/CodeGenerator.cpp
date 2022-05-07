@@ -6,14 +6,15 @@
 
 namespace visitor {
     std::any CodeGenerator::visitAssignExpr(const std::shared_ptr<ast::Assign> &expr) {
-        auto value = std::any_cast<llvm::Value *>(evaluate(expr->value));
+        auto eval = evaluate(expr->value);
+        auto value = std::any_cast<llvm::Value *>(eval);
         environment->assign(expr->name, value);
         return value;
     }
 
     std::any CodeGenerator::visitBinaryExpr(const std::shared_ptr<ast::Binary> &expr) {
-        std::any left = evaluate(expr->left);
-        std::any right = evaluate(expr->right);
+        auto left = recastExpression(evaluate(expr->left));
+        auto right = recastExpression(evaluate(expr->right));
 
         switch (expr->op.type) {
             case scanning::BANG_EQUAL:
@@ -31,17 +32,13 @@ namespace visitor {
                 return nullptr;
             case scanning::MINUS:
                 // todo: checkNumberOperands(expr->op, left, right);
-                return builder->CreateFSub(std::any_cast<llvm::ConstantFP *>(left),
-                                           std::any_cast<llvm::ConstantFP *>(right),
-                                           "subtmp");
+                return builder->CreateFSub(left, right, "subtmp");
             case scanning::PLUS:
                 /* todo: if (left.type() == typeid(double) && right.type() == typeid(double)) {
                     return std::any_cast<double>(left) + std::any_cast<double>(right);
                 }*/
 
-                return builder->CreateFAdd(std::any_cast<llvm::ConstantFP *>(left),
-                                           std::any_cast<llvm::ConstantFP *>(right),
-                                           "addtmp");
+                return builder->CreateFAdd(left, right, "addtmp");
 
                 /*
                 if (left.type() == typeid(std::string) && right.type() == typeid(std::string)) {
@@ -55,9 +52,7 @@ namespace visitor {
                 return nullptr;
             case scanning::STAR:
                 // todo: checkNumberOperands(expr->op, left, right);
-                return builder->CreateFMul(std::any_cast<llvm::ConstantFP *>(left),
-                                           std::any_cast<llvm::ConstantFP *>(right),
-                                           "multmp");
+                return builder->CreateFMul(left, right, "multmp");
             default:
                 // Unreachable.
                 return {};
@@ -95,7 +90,8 @@ namespace visitor {
     }
 
     std::any CodeGenerator::visitExpressionStmt(const std::shared_ptr<ast::Expression> &stmt) {
-        return std::any();
+        evaluate(stmt->expression);
+        return {};
     }
 
     std::any CodeGenerator::visitPrintStmt(const std::shared_ptr<ast::Print> &stmt) {
