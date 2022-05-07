@@ -6,8 +6,7 @@
 
 namespace visitor {
     std::any CodeGenerator::visitAssignExpr(const std::shared_ptr<ast::Assign> &expr) {
-        auto eval = evaluate(expr->value);
-        auto value = std::any_cast<llvm::Value *>(eval);
+        auto value = std::any_cast<llvm::Value *>(evaluate(expr->value));
         environment->assign(expr->name, value);
         return value;
     }
@@ -15,7 +14,6 @@ namespace visitor {
     std::any CodeGenerator::visitBinaryExpr(const std::shared_ptr<ast::Binary> &expr) {
         auto left = recastExpression(evaluate(expr->left));
         auto right = recastExpression(evaluate(expr->right));
-
         switch (expr->op.type) {
             case scanning::BANG_EQUAL:
                 // todo:
@@ -31,27 +29,24 @@ namespace visitor {
                 // todo:
                 return nullptr;
             case scanning::MINUS:
-                // todo: checkNumberOperands(expr->op, left, right);
+                checkNumberOperands(expr->op, left, right);
                 return builder->CreateFSub(left, right, "subtmp");
             case scanning::PLUS:
-                /* todo: if (left.type() == typeid(double) && right.type() == typeid(double)) {
-                    return std::any_cast<double>(left) + std::any_cast<double>(right);
-                }*/
-
-                return builder->CreateFAdd(left, right, "addtmp");
-
-                /*
-                if (left.type() == typeid(std::string) && right.type() == typeid(std::string)) {
-                    return std::any_cast<std::string>(left) + std::any_cast<std::string>(right);
+                if (left->getType() == getDoubleTy() && right->getType() == getDoubleTy()) {
+                    return builder->CreateFAdd(left, right, "addtmp");
                 }
 
+                /* todo:
+                if (left.type() == typeid(std::string) && right.type() == typeid(std::string)) {
+                    return std::any_cast<std::string>(left) + std::any_cast<std::string>(right);
+                }*/
+
                 throw RuntimeError{expr->op, "Operands must be two numbers or two strings."};
-                 */
             case scanning::SLASH:
-                // todo: checkNumberOperands(expr->op, left, right);
-                return nullptr;
+                checkNumberOperands(expr->op, left, right);
+                return builder->CreateFDiv(left, right, "divtmp");
             case scanning::STAR:
-                // todo: checkNumberOperands(expr->op, left, right);
+                checkNumberOperands(expr->op, left, right);
                 return builder->CreateFMul(left, right, "multmp");
             default:
                 // Unreachable.
@@ -60,7 +55,7 @@ namespace visitor {
     }
 
     std::any CodeGenerator::visitGroupingExpr(const std::shared_ptr<ast::Grouping> &expr) {
-        return std::any();
+        return evaluate(expr->expression);
     }
 
     std::any CodeGenerator::visitLiteralExpr(const std::shared_ptr<ast::Literal> &expr) {
@@ -106,12 +101,12 @@ namespace visitor {
     }
 
     std::any CodeGenerator::visitVarStmt(const std::shared_ptr<ast::Var> &stmt) {
-        std::any value = nullptr;
+        llvm::Value *value = nullptr;
         if (stmt->initializer != nullptr) {
-            value = evaluate(stmt->initializer);
+            value = recastExpression(evaluate(stmt->initializer));
         }
 
-        environment->define(stmt->name.lexeme, std::any_cast<llvm::Value *>(value));
+        environment->define(stmt->name.lexeme, value);
         return {};
     }
 

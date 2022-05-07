@@ -91,6 +91,14 @@ namespace visitor {
             return nullptr;
         }
 
+        void checkNumberOperands(const scanning::Token &op, llvm::Value *left, llvm::Value *right) {
+            if (left->getType() == getDoubleTy() && right->getType() == getDoubleTy()) {
+                return;
+            }
+
+            throw RuntimeError{op, "Operands must be numbers."};
+        }
+
     public:
         CodeGenerator() {
             // Open a new context and module.
