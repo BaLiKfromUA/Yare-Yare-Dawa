@@ -40,10 +40,3 @@ include_directories(${LLVM_INCLUDE_DIRS})
 
 add_subdirectory(src)
 add_subdirectory(test)
-
-# common for all targets
-foreach(TNAME ${TARGETS})
-    target_compile_features(${TNAME} PRIVATE cxx_std_17)
-    target_include_directories(${TNAME} PRIVATE ${LLVM_INCLUDE_DIRS})
-    target_link_libraries(${TNAME} ${llvm_libs})
-endforeach()
