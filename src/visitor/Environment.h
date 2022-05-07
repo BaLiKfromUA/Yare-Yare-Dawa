@@ -13,10 +13,11 @@
 #include "Errors.h"
 #include "scanning/Token.h"
 
-namespace interpreter {
-    class Environment : public std::enable_shared_from_this<Environment> {
+namespace visitor {
+    template<typename T = std::any>
+    class Environment : public std::enable_shared_from_this<Environment<T>> {
         std::shared_ptr<Environment> enclosing;
-        std::map<std::string, std::any> values;
+        std::map<std::string, T> values;
 
     public:
         Environment() : enclosing{nullptr} {}
@@ -24,7 +25,7 @@ namespace interpreter {
         explicit Environment(std::shared_ptr<Environment> enclosing)
                 : enclosing{std::move(enclosing)} {}
 
-        std::any get(const scanning::Token &name) {
+        T get(const scanning::Token &name) {
             auto elem = values.find(name.lexeme);
             if (elem != values.end()) {
                 return elem->second;
@@ -35,7 +36,7 @@ namespace interpreter {
             throw RuntimeError(name, "Undefined variable '" + name.lexeme + "'.");
         }
 
-        void assign(const scanning::Token &name, std::any value) {
+        void assign(const scanning::Token &name, T value) {
             auto elem = values.find(name.lexeme);
             if (elem != values.end()) {
                 elem->second = std::move(value);
@@ -50,7 +51,7 @@ namespace interpreter {
             throw RuntimeError(name, "Undefined variable '" + name.lexeme + "'.");
         }
 
-        void define(const std::string &name, std::any value) {
+        void define(const std::string &name, T value) {
             values[name] = std::move(value);
         }
     };

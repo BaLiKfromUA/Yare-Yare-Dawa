@@ -11,7 +11,7 @@
 
 #include "scanning/Token.h"
 #include "scanning/TokenType.h"
-#include "interpreter/Interpreter.h"
+#include "visitor//Interpreter.h"
 
 
 class YareYareDawaManager {
@@ -22,7 +22,7 @@ public:
     void runPrompt();
 
 private:
-    interpreter::Interpreter _interpreter{};
+    visitor::Interpreter _interpreter{};
 
     void run(std::string_view source);
 };

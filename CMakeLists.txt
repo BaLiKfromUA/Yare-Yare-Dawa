@@ -11,6 +11,16 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif ()
 
+# LLVM todo: make it optional depends on variable
+
+find_package(LLVM REQUIRED CONFIG)
+
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+
+# use llvm-config --components and some guessing to determine components
+llvm_map_components_to_libnames(llvm_libs support core codegen irreader)
+
 
 # install Google test and enable tests
 include(FetchContent)
@@ -26,6 +36,14 @@ enable_testing()
 
 # modules enabling
 include_directories(src)
+include_directories(${LLVM_INCLUDE_DIRS})
 
 add_subdirectory(src)
 add_subdirectory(test)
+
+# common for all targets
+foreach(TNAME ${TARGETS})
+    target_compile_features(${TNAME} PRIVATE cxx_std_17)
+    target_include_directories(${TNAME} PRIVATE ${LLVM_INCLUDE_DIRS})
+    target_link_libraries(${TNAME} ${llvm_libs})
+endforeach()

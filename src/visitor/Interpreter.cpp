@@ -4,7 +4,7 @@
 
 #include "Interpreter.h"
 
-namespace interpreter {
+namespace visitor {
 
     std::any Interpreter::visitUnaryExpr(const std::shared_ptr<ast::Unary> &expr) {
         std::any right = evaluate(expr->right);
@@ -117,14 +117,14 @@ namespace interpreter {
     }
 
     std::any Interpreter::visitBlockStmt(const std::shared_ptr<ast::Block> &stmt) {
-        executeBlock(stmt->statements, std::make_shared<Environment>(environment));
+        executeBlock(stmt->statements, std::make_shared<Environment<std::any>>(environment));
         return {};
     }
 
     void Interpreter::executeBlock(const std::vector<std::shared_ptr<ast::Stmt>> &statements,
-                                   const std::shared_ptr<Environment> &env) {
+                                   const std::shared_ptr<Environment<std::any>> &env) {
 
-        std::shared_ptr<Environment> previous = this->environment;
+        std::shared_ptr<Environment<std::any>> previous = this->environment;
         try {
             this->environment = env;
 

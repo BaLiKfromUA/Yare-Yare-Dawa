@@ -47,5 +47,5 @@ void YareYareDawaManager::run(std::string_view source) {
     // Stop if there was a runtime error.
     if (Errors::hadRuntimeError) return;
 
-    _interpreter.interpret(expression);
+    _interpreter.visitAST(expression);
 }

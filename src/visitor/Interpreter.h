@@ -13,14 +13,15 @@
 #include "ast/Expression.h"
 #include "ast/Statement.h"
 #include "Environment.h"
+#include "AstVisitor.h"
 
 
-namespace interpreter {
-    class Interpreter final : public ast::ExprVisitor, public ast::StmtVisitor {
-        std::shared_ptr<Environment> environment{new Environment};
+namespace visitor {
+    class Interpreter final : public AstVisitor {
+        std::shared_ptr<Environment<std::any>> environment{new Environment};
 
     public:
-        void interpret(const std::vector<std::shared_ptr<ast::Stmt>> &statements) {
+        void visitAST(const std::vector<std::shared_ptr<ast::Stmt>> &statements) override {
             try {
                 for (const std::shared_ptr<ast::Stmt> &statement: statements) {
                     execute(statement);
@@ -28,15 +29,6 @@ namespace interpreter {
             } catch (RuntimeError &error) {
                 Errors::errorRuntime(error);
             }
-        }
-
-    private:
-        std::any evaluate(const std::shared_ptr<ast::Expr> &expr) {
-            return expr->accept(*this);
-        }
-
-        void execute(const std::shared_ptr<ast::Stmt> &stmt) {
-            stmt->accept(*this);
         }
 
     public:
@@ -72,7 +64,7 @@ namespace interpreter {
 
     private:
         void executeBlock(const std::vector<std::shared_ptr<ast::Stmt>> &statements,
-                          const std::shared_ptr<Environment> &env);
+                          const std::shared_ptr<Environment<>> &env);
 
 
         static void checkNumberOperand(const scanning::Token &op,
