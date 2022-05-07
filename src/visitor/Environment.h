@@ -9,6 +9,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 #include <utility>    // std::move
 #include "Errors.h"
 #include "scanning/Token.h"
@@ -53,6 +54,16 @@ namespace visitor {
 
         void define(const std::string &name, T value) {
             values[name] = std::move(value);
+        }
+
+        // todo: refactor
+        std::vector<T> get_values() {
+            std::vector<T> result;
+            for (auto pair: values) {
+                result.push_back(pair.second);
+            }
+
+            return result;
         }
     };
 }

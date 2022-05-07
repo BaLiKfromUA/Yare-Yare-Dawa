@@ -11,7 +11,8 @@
 
 #include "scanning/Token.h"
 #include "scanning/TokenType.h"
-#include "visitor//Interpreter.h"
+#include "visitor/Interpreter.h"
+#include "visitor/CodeGenerator.h"
 
 
 class YareYareDawaManager {
@@ -22,7 +23,8 @@ public:
     void runPrompt();
 
 private:
-    visitor::Interpreter _interpreter{};
+    // todo: use flexible interface depends on modes
+    visitor::CodeGenerator _generator{};
 
     void run(std::string_view source);
 };

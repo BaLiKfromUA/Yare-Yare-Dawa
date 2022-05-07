@@ -16,14 +16,43 @@
 #include <memory>
 #include <vector>
 #include "ast/Statement.h"
+#include "Errors.h"
 #include "Environment.h"
 #include "AstVisitor.h"
 
 namespace visitor {
     class CodeGenerator final : public AstVisitor {
+    private:
         std::unique_ptr<llvm::LLVMContext> context;
         std::unique_ptr<llvm::Module> module;
         std::unique_ptr<llvm::IRBuilder<>> builder;
+        std::shared_ptr<Environment<llvm::Value *>> environment{new Environment<llvm::Value *>};
+        llvm::Function *Function_ = nullptr;
+
+        void dumpIR() {
+            module->print(llvm::outs(), nullptr);
+        }
+
+        std::string dumpVariablesToString() {
+            std::string outstr;
+            llvm::raw_string_ostream oss(outstr);
+            auto vars = environment->get_values();
+            for (auto var: vars) {
+                var->print(oss);
+                oss << "\n";
+            }
+
+            return oss.str();
+        }
+
+        std::string dumpIRToString() {
+            std::string outstr;
+            llvm::raw_string_ostream oss(outstr);
+
+            module->print(oss, nullptr);
+
+            return oss.str();
+        }
 
     public:
         CodeGenerator() {
@@ -35,11 +64,17 @@ namespace visitor {
             builder = std::make_unique<llvm::IRBuilder<>>(*context);
         }
 
-        void dumpIR();
+        void visitAST(const std::vector<std::shared_ptr<ast::Stmt>> &statements) override {
+            try {
+                for (const std::shared_ptr<ast::Stmt> &statement: statements) {
+                    execute(statement);
+                }
+            } catch (RuntimeError &error) {
+                Errors::errorRuntime(error);
+            }
 
-        std::string dumpIRToString();
-
-        void visitAST(const std::vector<std::shared_ptr<ast::Stmt>> &statements) override;
+            std::cout << dumpVariablesToString(); // todo: just for debug
+        }
 
         std::any visitAssignExpr(const std::shared_ptr<ast::Assign> &expr) override;
 

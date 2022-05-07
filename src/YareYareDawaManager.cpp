@@ -23,6 +23,7 @@ void YareYareDawaManager::runFile(std::string_view filePath) {
 }
 
 void YareYareDawaManager::runPrompt() {
+    // todo: don't run it in compiler mode
     while (true) {
         std::cout << "> ";
         std::string line;
@@ -47,5 +48,5 @@ void YareYareDawaManager::run(std::string_view source) {
     // Stop if there was a runtime error.
     if (Errors::hadRuntimeError) return;
 
-    _interpreter.visitAST(expression);
+    _generator.visitAST(expression);
 }
