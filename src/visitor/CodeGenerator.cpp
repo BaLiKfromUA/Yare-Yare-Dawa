@@ -31,14 +31,16 @@ namespace visitor {
                 return nullptr;
             case scanning::MINUS:
                 // todo: checkNumberOperands(expr->op, left, right);
-                return builder->CreateFSub(std::any_cast<llvm::ConstantFP *>(left), std::any_cast<llvm::ConstantFP *>(right),
+                return builder->CreateFSub(std::any_cast<llvm::ConstantFP *>(left),
+                                           std::any_cast<llvm::ConstantFP *>(right),
                                            "subtmp");
             case scanning::PLUS:
                 /* todo: if (left.type() == typeid(double) && right.type() == typeid(double)) {
                     return std::any_cast<double>(left) + std::any_cast<double>(right);
                 }*/
 
-                return builder->CreateFAdd(std::any_cast<llvm::ConstantFP *>(left), std::any_cast<llvm::ConstantFP *>(right),
+                return builder->CreateFAdd(std::any_cast<llvm::ConstantFP *>(left),
+                                           std::any_cast<llvm::ConstantFP *>(right),
                                            "addtmp");
 
                 /*
@@ -53,7 +55,8 @@ namespace visitor {
                 return nullptr;
             case scanning::STAR:
                 // todo: checkNumberOperands(expr->op, left, right);
-                return builder->CreateFMul(std::any_cast<llvm::ConstantFP *>(left), std::any_cast<llvm::ConstantFP *>(right),
+                return builder->CreateFMul(std::any_cast<llvm::ConstantFP *>(left),
+                                           std::any_cast<llvm::ConstantFP *>(right),
                                            "multmp");
             default:
                 // Unreachable.
@@ -96,7 +99,14 @@ namespace visitor {
     }
 
     std::any CodeGenerator::visitPrintStmt(const std::shared_ptr<ast::Print> &stmt) {
-        return std::any();
+        llvm::Function *calleeF = module->getFunction("__yyd_print");
+        if (!calleeF) {
+            // todo: throw error
+        }
+        std::vector<llvm::Value *> ArgsV;
+        ArgsV.push_back(std::any_cast<llvm::Value *>(evaluate(stmt->expression)));
+
+        return builder->CreateCall(calleeF, ArgsV);
     }
 
     std::any CodeGenerator::visitVarStmt(const std::shared_ptr<ast::Var> &stmt) {

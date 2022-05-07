@@ -54,6 +54,31 @@ namespace visitor {
             return oss.str();
         }
 
+        void startFunction(const std::string &name) {
+            // single __pcl_start function for void module
+            llvm::FunctionType *FT = llvm::FunctionType::get(
+                    llvm::Type::getVoidTy(*context), /* va args? */ false);
+
+            Function_ = llvm::Function::Create(FT, llvm::Function::ExternalLinkage, name,
+                                               *module);
+
+            // basic block to start instruction insertion
+            llvm::BasicBlock *BB = llvm::BasicBlock::Create(*context, "entry", Function_);
+            builder->SetInsertPoint(BB);
+        }
+
+        void endCurrentFunction() { builder->CreateRetVoid(); }
+
+        llvm::Type *getInt32Ty() { return llvm::Type::getInt32Ty(*context); }
+
+        llvm::Type *getFloatTy() { return llvm::Type::getFloatTy(*context); }
+
+        llvm::Type *getVoidTy() { return llvm::Type::getVoidTy(*context); }
+
+        void createFnDecl(llvm::FunctionType *FT, const std::string &name) {
+            llvm::Function::Create(FT, llvm::Function::ExternalLinkage, name, *module);
+        }
+
     public:
         CodeGenerator() {
             // Open a new context and module.
@@ -62,6 +87,19 @@ namespace visitor {
 
             // Create a new builder for the module.
             builder = std::make_unique<llvm::IRBuilder<>>(*context);
+
+            // add standard lib
+            startFunction("__yyd_start");
+
+            // prototype for print and scan functions
+            llvm::Type *Tys[] = {getFloatTy()};// todo: make double
+            llvm::FunctionType *FTPrint = llvm::FunctionType::get(getVoidTy(), Tys, /* va args? */ false);
+            // creating decls for modules
+            createFnDecl(FTPrint, "__yyd_print");
+        }
+
+        ~CodeGenerator() override {
+            endCurrentFunction();
         }
 
         void visitAST(const std::vector<std::shared_ptr<ast::Stmt>> &statements) override {
@@ -73,7 +111,9 @@ namespace visitor {
                 Errors::errorRuntime(error);
             }
 
-            std::cout << dumpVariablesToString(); // todo: just for debug
+            dumpIR();
+            // std::cout << dumpVariablesToString(); // todo: just for debug
+            //std::cout << dumpIRToString(); // todo: just for debug
         }
 
         std::any visitAssignExpr(const std::shared_ptr<ast::Assign> &expr) override;
