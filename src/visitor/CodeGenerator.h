@@ -27,77 +27,7 @@ namespace visitor {
         std::unique_ptr<llvm::Module> module;
         std::unique_ptr<llvm::IRBuilder<>> builder;
         std::shared_ptr<Environment<llvm::Value *>> environment{new Environment<llvm::Value *>};
-        llvm::Function *Function_ = nullptr;
-
-        void dumpIR() {
-            module->print(llvm::outs(), nullptr);
-        }
-
-        std::string dumpVariablesToString() {
-            std::string outstr;
-            llvm::raw_string_ostream oss(outstr);
-            auto vars = environment->get_values();
-            for (auto var: vars) {
-                var->print(oss);
-                oss << "\n";
-            }
-
-            return oss.str();
-        }
-
-        std::string dumpIRToString() {
-            std::string outstr;
-            llvm::raw_string_ostream oss(outstr);
-
-            module->print(oss, nullptr);
-
-            return oss.str();
-        }
-
-        void startFunction(const std::string &name) {
-            // single __pcl_start function for void module
-            llvm::FunctionType *FT = llvm::FunctionType::get(
-                    llvm::Type::getVoidTy(*context), /* va args? */ false);
-
-            Function_ = llvm::Function::Create(FT, llvm::Function::ExternalLinkage, name,
-                                               *module);
-
-            // basic block to start instruction insertion
-            llvm::BasicBlock *BB = llvm::BasicBlock::Create(*context, "entry", Function_);
-            builder->SetInsertPoint(BB);
-        }
-
-        void endCurrentFunction() { builder->CreateRetVoid(); }
-
-        llvm::Type *getInt32Ty() { return llvm::Type::getInt32Ty(*context); }
-
-        llvm::Type *getDoubleTy() { return llvm::Type::getDoubleTy(*context); }
-
-        llvm::Type *getVoidTy() { return llvm::Type::getVoidTy(*context); }
-
-        void createFnDecl(llvm::FunctionType *FT, const std::string &name) {
-            llvm::Function::Create(FT, llvm::Function::ExternalLinkage, name, *module);
-        }
-
-        static llvm::Value *recastExpression(std::any expression) {
-            if (expression.type() == typeid(llvm::Value *)) {
-                return std::any_cast<llvm::Value *>(expression);
-            } else if (expression.type() == typeid(llvm::ConstantFP *)) {
-                auto tmp = std::any_cast<llvm::ConstantFP *>(expression);
-                return static_cast<llvm::Value *>(tmp);
-            }
-
-            //todo: throw exception
-            return nullptr;
-        }
-
-        void checkNumberOperands(const scanning::Token &op, llvm::Value *left, llvm::Value *right) {
-            if (left->getType() == getDoubleTy() && right->getType() == getDoubleTy()) {
-                return;
-            }
-
-            throw RuntimeError{op, "Operands must be numbers."};
-        }
+        std::unique_ptr<llvm::Function *> mainFunction;
 
     public:
         CodeGenerator() {
@@ -110,14 +40,8 @@ namespace visitor {
         }
 
         void visitAST(const std::vector<std::shared_ptr<ast::Stmt>> &statements) override {
-            startFunction("__yyd_start");
-            // add standard lib
-            // prototype for print and scan functions
-            llvm::Type *Tys[] = {getDoubleTy()};
-            llvm::FunctionType *FTPrint = llvm::FunctionType::get(getVoidTy(), Tys, /* va args? */ false);
-            // creating decls for modules
-            createFnDecl(FTPrint, "__yyd_print");
-
+            startMainFunction("__yyd_start");
+            enableStandardLibrary();
             try {
                 for (const std::shared_ptr<ast::Stmt> &statement: statements) {
                     execute(statement);
@@ -125,7 +49,7 @@ namespace visitor {
             } catch (RuntimeError &error) {
                 Errors::errorRuntime(error);
             }
-            endCurrentFunction();
+            endMainFunction();
 
             dumpIR();
         }
@@ -155,6 +79,80 @@ namespace visitor {
         std::any visitIfStmt(const std::shared_ptr<ast::If> &stmt) override;
 
         std::any visitWhileStmt(const std::shared_ptr<ast::While> &stmt) override;
+
+
+    private:
+        /* debug helpers */
+        void dumpIR() {
+            module->print(llvm::outs(), nullptr);
+        }
+
+        std::string dumpVariablesToString() {
+            std::string outstr;
+            llvm::raw_string_ostream oss(outstr);
+            auto vars = environment->get_values();
+            for (auto var: vars) {
+                var->print(oss);
+                oss << "\n";
+            }
+
+            return oss.str();
+        }
+
+        std::string dumpIRToString() {
+            std::string outstr;
+            llvm::raw_string_ostream oss(outstr);
+
+            module->print(oss, nullptr);
+
+            return oss.str();
+        }
+
+        /* type helpers */
+        llvm::Type *getDoubleTy() { return llvm::Type::getDoubleTy(*context); }
+
+        llvm::Type *getBoolTy() { return builder->getTrue()->getType(); }
+
+        llvm::Type *getVoidTy() { return llvm::Type::getVoidTy(*context); }
+
+        void checkNumberOperands(const scanning::Token &op, llvm::Value *left, llvm::Value *right) {
+            if (left->getType() == getDoubleTy() && right->getType() == getDoubleTy()) {
+                return;
+            }
+
+            throw RuntimeError{op, "Operands must be numbers."};
+        }
+
+        /* function helpers */
+        void startMainFunction(const std::string &name) {
+            // single __yyd_start function for void module
+            llvm::FunctionType *FT = llvm::FunctionType::get(llvm::Type::getVoidTy(*context), false);
+
+            mainFunction = std::make_unique<llvm::Function *>(
+                    llvm::Function::Create(FT, llvm::Function::ExternalLinkage, name,
+                                           *module));
+
+            // basic block to start instruction insertion
+            llvm::BasicBlock *BB = llvm::BasicBlock::Create(*context, "entry", *mainFunction);
+            builder->SetInsertPoint(BB);
+        }
+
+        void endMainFunction() { builder->CreateRetVoid(); }
+
+        void createFnDecl(llvm::FunctionType *FT, const std::string &name) {
+            llvm::Function::Create(FT, llvm::Function::ExternalLinkage, name, *module);
+        }
+
+        /* library helpers */
+        void enableStandardLibrary() {
+            // prototypes for print function
+            llvm::FunctionType *printForDouble = llvm::FunctionType::get(getVoidTy(), {getDoubleTy()}, false);
+            // creating decls for modules
+            createFnDecl(printForDouble, "__yyd_print_double");
+
+            llvm::FunctionType *printForBool = llvm::FunctionType::get(getVoidTy(), {getBoolTy()}, false);
+            createFnDecl(printForBool, "__yyd_print_bool");
+        }
     };
 }
 

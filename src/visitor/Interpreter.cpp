@@ -64,7 +64,7 @@ namespace visitor {
                 return std::any_cast<double>(left) * std::any_cast<double>(right);
             default:
                 // Unreachable.
-                return {};
+                throw RuntimeError{expr->op, "Unknown binary operation."};
         }
     }
 

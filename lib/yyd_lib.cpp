@@ -2,7 +2,9 @@
 
 extern "C" void __yyd_start();
 
-extern "C" void __yyd_print(double n) { std::cout << n << std::endl; }
+extern "C" void __yyd_print_double(double n) { std::cout << n << std::endl; }
+
+extern "C" void __yyd_print_bool(bool n) { std::cout << (n ? "true" : "false") << std::endl; }
 
 int main() { __yyd_start(); }
 
