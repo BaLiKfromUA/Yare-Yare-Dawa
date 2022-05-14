@@ -147,12 +147,8 @@ namespace visitor {
         auto previous = this->environment;
         this->environment = env;
 
-        auto beginName = blockName + " begin ";
-        auto endName = blockName + " end ";
-
         auto blockParent = builder->GetInsertBlock()->getParent();
-        auto block = llvm::BasicBlock::Create(*context, beginName, blockParent);
-        auto afterBlock = llvm::BasicBlock::Create(*context, endName);
+        auto block = llvm::BasicBlock::Create(*context, blockName, blockParent);
 
         builder->CreateBr(block);
         builder->SetInsertPoint(block);
@@ -162,16 +158,10 @@ namespace visitor {
             }
         } catch (...) {
             this->environment = previous;
-            blockParent->getBasicBlockList().push_back(afterBlock);
-            builder->CreateBr(afterBlock);
-            builder->SetInsertPoint(afterBlock);
             throw;
         }
 
         this->environment = previous;
-        blockParent->getBasicBlockList().push_back(afterBlock);
-        builder->CreateBr(afterBlock);
-        builder->SetInsertPoint(afterBlock);
     }
 
     std::any CodeGenerator::visitExpressionStmt(const std::shared_ptr<ast::Expression> &stmt) {
