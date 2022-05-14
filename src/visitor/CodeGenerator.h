@@ -129,7 +129,7 @@ namespace visitor {
             throw RuntimeError{op, "Operand must be a number."};
         }
 
-        /* function helpers */
+        /* block helpers */
         void startMainFunction(const std::string &name) {
             // single __yyd_start function for void module
             llvm::FunctionType *FT = llvm::FunctionType::get(llvm::Type::getVoidTy(*context), false);
@@ -148,6 +148,11 @@ namespace visitor {
         void createFnDecl(llvm::FunctionType *FT, const std::string &name) {
             llvm::Function::Create(FT, llvm::Function::ExternalLinkage, name, *module);
         }
+
+        void executeBlock(const std::vector<std::shared_ptr<ast::Stmt>> &statements,
+                          const std::shared_ptr<Environment<llvm::Value *>> &env,
+                          const std::string &blockName);
+
 
         /* library helpers */
         void enableStandardLibrary() {

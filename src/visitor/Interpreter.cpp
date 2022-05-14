@@ -125,9 +125,8 @@ namespace visitor {
                                    const std::shared_ptr<Environment<std::any>> &env) {
 
         std::shared_ptr<Environment<std::any>> previous = this->environment;
+        this->environment = env;
         try {
-            this->environment = env;
-
             for (const std::shared_ptr<ast::Stmt> &statement: statements) {
                 execute(statement);
             }

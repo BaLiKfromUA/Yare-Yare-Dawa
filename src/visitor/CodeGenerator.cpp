@@ -6,6 +6,7 @@
 
 namespace visitor {
     std::any CodeGenerator::visitAssignExpr(const std::shared_ptr<ast::Assign> &expr) {
+        // todo: maybe use `return Builder_->CreateStore(Rhs, V);`
         auto value = std::any_cast<llvm::Value *>(evaluate(expr->value));
         environment->assign(expr->name, value);
         return value;
@@ -56,10 +57,10 @@ namespace visitor {
                 return builder->CreateFCmpOLE(left, right);
             case scanning::MINUS:
                 checkNumberOperands(expr->op, left, right);
-                return builder->CreateFSub(left, right, "subtmp");
+                return builder->CreateFSub(left, right);
             case scanning::PLUS:
                 if (left->getType() == getDoubleTy() && right->getType() == getDoubleTy()) {
-                    return builder->CreateFAdd(left, right, "addtmp");
+                    return builder->CreateFAdd(left, right);
                 }
 
                 /* todo:
@@ -70,10 +71,10 @@ namespace visitor {
                 throw RuntimeError{expr->op, "Operands must be two numbers or two strings."};
             case scanning::SLASH:
                 checkNumberOperands(expr->op, left, right);
-                return builder->CreateFDiv(left, right, "divtmp");
+                return builder->CreateFDiv(left, right);
             case scanning::STAR:
                 checkNumberOperands(expr->op, left, right);
-                return builder->CreateFMul(left, right, "multmp");
+                return builder->CreateFMul(left, right);
             default:
                 // Unreachable.
                 throw RuntimeError{expr->op, "Unknown binary operation."};
@@ -104,7 +105,7 @@ namespace visitor {
 
         switch (expr->op.type) {
             case scanning::BANG:
-                // todo: check how to xor string (I guess always return true)
+                // todo: check how to xor string (I guess always return false)
                 return builder->CreateXor(builder->CreateFPToUI(right, getBoolTy()), builder->getTrue());
             case scanning::MINUS:
                 checkNumberOperand(expr->op, right);
@@ -135,12 +136,46 @@ namespace visitor {
     }
 
     std::any CodeGenerator::visitBlockStmt(const std::shared_ptr<ast::Block> &stmt) {
-        return std::any();
+        executeBlock(stmt->statements, std::make_shared<Environment<llvm::Value *>>(environment), "scope");
+        return {};
+    }
+
+    void CodeGenerator::executeBlock(const std::vector<std::shared_ptr<ast::Stmt>> &statements,
+                                     const std::shared_ptr<Environment<llvm::Value *>> &env,
+                                     const std::string &blockName) {
+
+        auto previous = this->environment;
+        this->environment = env;
+
+        auto beginName = blockName + " begin ";
+        auto endName = blockName + " end ";
+
+        auto blockParent = builder->GetInsertBlock()->getParent();
+        auto block = llvm::BasicBlock::Create(*context, beginName, blockParent);
+        auto afterBlock = llvm::BasicBlock::Create(*context, endName);
+
+        builder->CreateBr(block);
+        builder->SetInsertPoint(block);
+        try {
+            for (const std::shared_ptr<ast::Stmt> &statement: statements) {
+                execute(statement);
+            }
+        } catch (...) {
+            this->environment = previous;
+            blockParent->getBasicBlockList().push_back(afterBlock);
+            builder->CreateBr(afterBlock);
+            builder->SetInsertPoint(afterBlock);
+            throw;
+        }
+
+        this->environment = previous;
+        blockParent->getBasicBlockList().push_back(afterBlock);
+        builder->CreateBr(afterBlock);
+        builder->SetInsertPoint(afterBlock);
     }
 
     std::any CodeGenerator::visitExpressionStmt(const std::shared_ptr<ast::Expression> &stmt) {
-        evaluate(stmt->expression);
-        return {};
+        return evaluate(stmt->expression);
     }
 
     std::any CodeGenerator::visitPrintStmt(const std::shared_ptr<ast::Print> &stmt) {
@@ -171,7 +206,46 @@ namespace visitor {
     }
 
     std::any CodeGenerator::visitIfStmt(const std::shared_ptr<ast::If> &stmt) {
-        return std::any();
+        auto condition = std::any_cast<llvm::Value *>(evaluate(stmt->condition));
+
+        if (!condition) {
+            return nullptr; // todo: fix;
+        }
+
+        // todo: check how to cast string (I guess always return false)
+        condition = builder->CreateFPToUI(condition, getBoolTy());
+
+        auto parent = builder->GetInsertBlock()->getParent();
+        // Create blocks for the then and else cases.  Insert the 'then' block at the
+        // end of the function.
+        auto thenBranch =
+                llvm::BasicBlock::Create(*context, "then ", parent);
+        auto elseBranch = llvm::BasicBlock::Create(*context, "else ");
+        auto mergeBranch = llvm::BasicBlock::Create(*context, "ifcont ");
+
+        builder->CreateCondBr(condition, thenBranch, elseBranch);
+
+        // Emit then value.
+        builder->SetInsertPoint(thenBranch);
+        // todo: validate that thenBranch is not null!
+        execute(stmt->thenBranch);
+        builder->CreateBr(mergeBranch);
+
+        // Emit else block.
+        parent->getBasicBlockList().push_back(elseBranch);
+        builder->SetInsertPoint(elseBranch);
+
+        if (stmt->elseBranch != nullptr) {
+            execute(stmt->elseBranch);
+        }
+
+        builder->CreateBr(mergeBranch);
+
+        // Emit merge block.
+        parent->getBasicBlockList().push_back(mergeBranch);
+        builder->SetInsertPoint(mergeBranch);
+
+        return {};
     }
 
     std::any CodeGenerator::visitWhileStmt(const std::shared_ptr<ast::While> &stmt) {
