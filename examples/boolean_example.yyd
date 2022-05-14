@@ -1,7 +1,8 @@
 print 1 == 2;         // false
-print "cat" != "dog"; // true
-print 314 == "pi"; // false
-print 123 == "123"; // false (NO IMPLICIT OPERATIONS)
+print 1 != 2;         // true
+// print "cat" != "dog"; // true
+// print 314 == "pi"; // false
+// print 123 == "123"; // false (NO IMPLICIT OPERATIONS)
 
 print !true;  // false
 print !false; // true

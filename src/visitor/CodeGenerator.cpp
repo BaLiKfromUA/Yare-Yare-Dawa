@@ -120,7 +120,18 @@ namespace visitor {
     }
 
     std::any CodeGenerator::visitLogicalExpr(const std::shared_ptr<ast::Logical> &expr) {
-        return std::any();
+        auto left = std::any_cast<llvm::Value *>(evaluate(expr->left));
+        auto right = std::any_cast<llvm::Value *>(evaluate(expr->right));
+
+        // todo: check with strings!
+        if (expr->op.type == scanning::OR) {
+            return builder->CreateOr(left, right);
+        } else if (expr->op.type == scanning::AND) {
+            return builder->CreateAnd(left, right);
+        }
+
+        // Unreachable.
+        throw RuntimeError{expr->op, "Unknown logical operation."};
     }
 
     std::any CodeGenerator::visitBlockStmt(const std::shared_ptr<ast::Block> &stmt) {
