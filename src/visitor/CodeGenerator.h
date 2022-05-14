@@ -123,6 +123,12 @@ namespace visitor {
             throw RuntimeError{op, "Operands must be numbers."};
         }
 
+        void checkNumberOperand(const scanning::Token &op,
+                                llvm::Value *operand) {
+            if (operand->getType() == getDoubleTy()) return;
+            throw RuntimeError{op, "Operand must be a number."};
+        }
+
         /* function helpers */
         void startMainFunction(const std::string &name) {
             // single __yyd_start function for void module

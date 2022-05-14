@@ -100,7 +100,19 @@ namespace visitor {
     }
 
     std::any CodeGenerator::visitUnaryExpr(const std::shared_ptr<ast::Unary> &expr) {
-        return std::any();
+        auto right = std::any_cast<llvm::Value *>(evaluate(expr->right));
+
+        switch (expr->op.type) {
+            case scanning::BANG:
+                // todo: check how to xor string (I guess always return true)
+                return builder->CreateXor(builder->CreateFPToUI(right, getBoolTy()), builder->getTrue());
+            case scanning::MINUS:
+                checkNumberOperand(expr->op, right);
+                return builder->CreateFNeg(right);
+            default:
+                // Unreachable.
+                throw RuntimeError{expr->op, "Unknown unary operation."};
+        }
     }
 
     std::any CodeGenerator::visitVariableExpr(const std::shared_ptr<ast::Variable> &expr) {

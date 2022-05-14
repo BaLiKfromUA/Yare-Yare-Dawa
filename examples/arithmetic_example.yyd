@@ -12,3 +12,8 @@ print 2 + 2 * 3; // 8
 print (2 + 2) * 3; // 12
 print 0 / 0; // nan
 print 42 / 0; // inf
+
+var c = 42;
+print c;
+c = -c;
+print c;
