@@ -108,11 +108,7 @@ namespace visitor {
 
         switch (expr->op.type) {
             case scanning::BANG:
-                if (right->getType() == getStringTy()) {
-                    return static_cast<llvm::Value *>(builder->getFalse());
-                }
-
-                return builder->CreateXor(builder->CreateFPToUI(right, getBoolTy()), builder->getTrue());
+                return builder->CreateXor(convertToBoolean(right), builder->getTrue());
             case scanning::MINUS:
                 checkNumberOperand(expr->op, right);
                 return builder->CreateFNeg(right);
@@ -130,10 +126,8 @@ namespace visitor {
         auto left = std::any_cast<llvm::Value *>(evaluate(expr->left));
         auto right = std::any_cast<llvm::Value *>(evaluate(expr->right));
 
-        auto leftAsBool = left->getType() == getStringTy() ? static_cast<llvm::Value *>(builder->getTrue())
-                                                           : builder->CreateFPToUI(left, getBoolTy());
-        auto rightAsBool = right->getType() == getStringTy() ? static_cast<llvm::Value *>(builder->getTrue())
-                                                            : builder->CreateFPToUI(right, getBoolTy());
+        auto leftAsBool = convertToBoolean(left);
+        auto rightAsBool = convertToBoolean(right);
 
 
         if (expr->op.type == scanning::OR) {
@@ -222,7 +216,7 @@ namespace visitor {
             return nullptr; // todo: fix;
         }
 
-        condition = builder->CreateFPToUI(condition, getBoolTy());
+        condition = convertToBoolean(condition);
 
         auto parent = builder->GetInsertBlock()->getParent();
         // Create blocks for the then and else cases.  Insert the 'then' block at the
@@ -277,13 +271,13 @@ namespace visitor {
 
         auto condition = std::any_cast<llvm::Value *>(evaluate(stmt->condition));
         // todo: handle that body or condition is null
-        condition = builder->CreateFPToUI(condition, getBoolTy());
+        condition = convertToBoolean(condition);
 
         while (condition != nullptr && condition == builder->getTrue()) {
             execute(stmt->body);
 
             condition = std::any_cast<llvm::Value *>(evaluate(stmt->condition));
-            condition = builder->CreateFPToUI(condition, getBoolTy());
+            condition = convertToBoolean(condition);
         }
 
         // Emit merge block.

@@ -170,7 +170,13 @@ namespace visitor {
 
 
             //4. Return a cast to an i8*
-            return static_cast<llvm::Value*>(llvm::ConstantExpr::getBitCast(globalDeclaration, charType->getPointerTo()));
+            return static_cast<llvm::Value *>(llvm::ConstantExpr::getBitCast(globalDeclaration,
+                                                                             charType->getPointerTo()));
+        }
+
+        llvm::Value *convertToBoolean(llvm::Value *val) {
+            return val->getType() == getStringTy() ? static_cast<llvm::Value *>(builder->getTrue())
+                                                   : builder->CreateFPToUI(val, getBoolTy());
         }
 
         /* block helpers */
