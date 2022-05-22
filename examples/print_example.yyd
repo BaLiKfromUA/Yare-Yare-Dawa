@@ -1,4 +1,7 @@
-print "one";
+var s1 = "Hello, World!";
+var s2 = "test";
+print s1;
+print s2;
 print true;
 print 2 + 1;
 print (2 + 1) == (1 + 2);

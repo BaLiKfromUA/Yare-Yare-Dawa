@@ -5,14 +5,14 @@
 #include "CodeGenerator.h"
 
 namespace visitor {
-    std::any CodeGenerator::visitAssignExpr(const std::shared_ptr<ast::Assign> &expr) {
+    std::any CodeGenerator::visitAssignExpr(const std::shared_ptr <ast::Assign> &expr) {
         // todo: maybe use `return Builder_->CreateStore(Rhs, V);`
         auto value = std::any_cast<llvm::Value *>(evaluate(expr->value));
         environment->assign(expr->name, value);
         return value;
     }
 
-    std::any CodeGenerator::visitBinaryExpr(const std::shared_ptr<ast::Binary> &expr) {
+    std::any CodeGenerator::visitBinaryExpr(const std::shared_ptr <ast::Binary> &expr) {
         auto left = std::any_cast<llvm::Value *>(evaluate(expr->left));
         auto right = std::any_cast<llvm::Value *>(evaluate(expr->right));
         // https://llvm.org/doxygen/classllvm_1_1CmpInst.html#a2be3583dac92a031fa1458d4d992c78b
@@ -22,23 +22,23 @@ namespace visitor {
                     return builder->CreateFCmpONE(left, right);
                 }
 
-                if (left->getType() == getBoolTy() && right->getType() == getBoolTy()) {
+                if ((left->getType() == getBoolTy() && right->getType() == getBoolTy())
+                    || (left->getType() == getStringTy() && right->getType() == getStringTy())) {
                     return builder->CreateICmpNE(left, right);
                 }
 
-                // todo: support strings
-
-                throw RuntimeError{expr->op, "Operands must be two numbers or two booleans."};
+                return static_cast<llvm::Value *>(builder->getTrue());
             case scanning::EQUAL_EQUAL:
                 if (left->getType() == getDoubleTy() && right->getType() == getDoubleTy()) {
                     return builder->CreateFCmpOEQ(left, right);
                 }
 
-                if (left->getType() == getBoolTy() && right->getType() == getBoolTy()) {
+                if ((left->getType() == getBoolTy() && right->getType() == getBoolTy())
+                    || (left->getType() == getStringTy() && right->getType() == getStringTy())) {
                     return builder->CreateICmpEQ(left, right);
                 }
-                // todo: support strings
-                throw RuntimeError{expr->op, "Operands must be two numbers or two booleans."};
+
+                return static_cast<llvm::Value *>(builder->getFalse());
             case scanning::GREATER:
                 checkNumberOperands(expr->op, left, right);
                 // True if ordered and greater than
@@ -81,12 +81,12 @@ namespace visitor {
         }
     }
 
-    std::any CodeGenerator::visitGroupingExpr(const std::shared_ptr<ast::Grouping> &expr) {
+    std::any CodeGenerator::visitGroupingExpr(const std::shared_ptr <ast::Grouping> &expr) {
         return evaluate(expr->expression);
     }
 
     /* NOTE: you must return llvm::Value* */
-    std::any CodeGenerator::visitLiteralExpr(const std::shared_ptr<ast::Literal> &expr) {
+    std::any CodeGenerator::visitLiteralExpr(const std::shared_ptr <ast::Literal> &expr) {
         auto value = expr->value;
         if (value.type() == typeid(double)) {
             auto tmp = llvm::ConstantFP::get(*context, llvm::APFloat(std::any_cast<double>(value)));
@@ -94,18 +94,24 @@ namespace visitor {
         } else if (value.type() == typeid(bool)) {
             auto tmp = std::any_cast<bool>(value) ? builder->getTrue() : builder->getFalse();
             return static_cast<llvm::Value *>(tmp);
+        } else if (value.type() == typeid(std::string)) {
+            auto casted_value = std::any_cast<std::string>(value);
+            return convertStringToIR(casted_value);
         } else {
-            // todo: handle string and throw error in case of invalid type
+            // todo: throw error in case of invalid type
             return nullptr;
         }
     }
 
-    std::any CodeGenerator::visitUnaryExpr(const std::shared_ptr<ast::Unary> &expr) {
+    std::any CodeGenerator::visitUnaryExpr(const std::shared_ptr <ast::Unary> &expr) {
         auto right = std::any_cast<llvm::Value *>(evaluate(expr->right));
 
         switch (expr->op.type) {
             case scanning::BANG:
-                // todo: check how to xor string (I guess always return false)
+                if (right->getType() == getStringTy()) {
+                    return static_cast<llvm::Value *>(builder->getFalse());
+                }
+
                 return builder->CreateXor(builder->CreateFPToUI(right, getBoolTy()), builder->getTrue());
             case scanning::MINUS:
                 checkNumberOperand(expr->op, right);
@@ -116,32 +122,37 @@ namespace visitor {
         }
     }
 
-    std::any CodeGenerator::visitVariableExpr(const std::shared_ptr<ast::Variable> &expr) {
+    std::any CodeGenerator::visitVariableExpr(const std::shared_ptr <ast::Variable> &expr) {
         return environment->get(expr->name);
     }
 
-    std::any CodeGenerator::visitLogicalExpr(const std::shared_ptr<ast::Logical> &expr) {
+    std::any CodeGenerator::visitLogicalExpr(const std::shared_ptr <ast::Logical> &expr) {
         auto left = std::any_cast<llvm::Value *>(evaluate(expr->left));
         auto right = std::any_cast<llvm::Value *>(evaluate(expr->right));
 
-        // todo: check with strings!
+        auto leftAsBool = left->getType() == getStringTy() ? static_cast<llvm::Value *>(builder->getTrue())
+                                                           : builder->CreateFPToUI(left, getBoolTy());
+        auto rightAsBool = right->getType() == getStringTy() ? static_cast<llvm::Value *>(builder->getTrue())
+                                                            : builder->CreateFPToUI(right, getBoolTy());
+
+
         if (expr->op.type == scanning::OR) {
-            return builder->CreateOr(left, right);
+            return builder->CreateOr(leftAsBool, rightAsBool);
         } else if (expr->op.type == scanning::AND) {
-            return builder->CreateAnd(left, right);
+            return builder->CreateAnd(leftAsBool, rightAsBool);
         }
 
         // Unreachable.
         throw RuntimeError{expr->op, "Unknown logical operation."};
     }
 
-    std::any CodeGenerator::visitBlockStmt(const std::shared_ptr<ast::Block> &stmt) {
-        executeBlock(stmt->statements, std::make_shared<Environment<llvm::Value *>>(environment));
+    std::any CodeGenerator::visitBlockStmt(const std::shared_ptr <ast::Block> &stmt) {
+        executeBlock(stmt->statements, std::make_shared < Environment < llvm::Value * >> (environment));
         return {};
     }
 
-    void CodeGenerator::executeBlock(const std::vector<std::shared_ptr<ast::Stmt>> &statements,
-                                     const std::shared_ptr<Environment<llvm::Value *>> &env) {
+    void CodeGenerator::executeBlock(const std::vector <std::shared_ptr<ast::Stmt>> &statements,
+                                     const std::shared_ptr <Environment<llvm::Value *>> &env) {
         ++scope_id;
 
         auto previous = this->environment;
@@ -154,7 +165,7 @@ namespace visitor {
         builder->CreateBr(block);
         builder->SetInsertPoint(block);
         try {
-            for (const std::shared_ptr<ast::Stmt> &statement: statements) {
+            for (const std::shared_ptr <ast::Stmt> &statement: statements) {
                 execute(statement);
             }
         } catch (...) {
@@ -171,11 +182,11 @@ namespace visitor {
         builder->SetInsertPoint(afterBlock);
     }
 
-    std::any CodeGenerator::visitExpressionStmt(const std::shared_ptr<ast::Expression> &stmt) {
+    std::any CodeGenerator::visitExpressionStmt(const std::shared_ptr <ast::Expression> &stmt) {
         return evaluate(stmt->expression);
     }
 
-    std::any CodeGenerator::visitPrintStmt(const std::shared_ptr<ast::Print> &stmt) {
+    std::any CodeGenerator::visitPrintStmt(const std::shared_ptr <ast::Print> &stmt) {
         auto value = std::any_cast<llvm::Value *>(evaluate(stmt->expression));
         std::string function_name = "__yyd_print_double";
 
@@ -183,6 +194,8 @@ namespace visitor {
             function_name = "__yyd_print_double";
         } else if (value->getType() == getBoolTy()) {
             function_name = "__yyd_print_bool";
+        } else if (value->getType() == getStringTy()) {
+            function_name = "__yyd_print_string";
         } else {
             // todo: throw error
         }
@@ -192,7 +205,7 @@ namespace visitor {
         return builder->CreateCall(calleeF, {value});
     }
 
-    std::any CodeGenerator::visitVarStmt(const std::shared_ptr<ast::Var> &stmt) {
+    std::any CodeGenerator::visitVarStmt(const std::shared_ptr <ast::Var> &stmt) {
         llvm::Value *value = nullptr;
         if (stmt->initializer != nullptr) {
             value = std::any_cast<llvm::Value *>(evaluate(stmt->initializer));
@@ -202,14 +215,13 @@ namespace visitor {
         return {};
     }
 
-    std::any CodeGenerator::visitIfStmt(const std::shared_ptr<ast::If> &stmt) {
+    std::any CodeGenerator::visitIfStmt(const std::shared_ptr <ast::If> &stmt) {
         auto condition = std::any_cast<llvm::Value *>(evaluate(stmt->condition));
 
         if (!condition) {
             return nullptr; // todo: fix;
         }
 
-        // check how to cast string (I guess always return true if not null ptr)
         condition = builder->CreateFPToUI(condition, getBoolTy());
 
         auto parent = builder->GetInsertBlock()->getParent();
@@ -250,7 +262,7 @@ namespace visitor {
 
     // WARNING!!! IT'S EXTREMELY UGLY AND NOT EFFICIENT SOLUTION!!! DON'T LOOK AT IT!!!
     // todo: refactor !!!
-    std::any CodeGenerator::visitWhileStmt(const std::shared_ptr<ast::While> &stmt) {
+    std::any CodeGenerator::visitWhileStmt(const std::shared_ptr <ast::While> &stmt) {
 
         auto parent = builder->GetInsertBlock()->getParent();
         // Create blocks for the then and else cases.  Insert the 'then' block at the
@@ -265,7 +277,6 @@ namespace visitor {
 
         auto condition = std::any_cast<llvm::Value *>(evaluate(stmt->condition));
         // todo: handle that body or condition is null
-        // todo: check how to cast string (I guess always return true if not null ptr)
         condition = builder->CreateFPToUI(condition, getBoolTy());
 
         while (condition != nullptr && condition == builder->getTrue()) {

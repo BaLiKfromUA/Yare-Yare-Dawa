@@ -117,6 +117,15 @@ namespace visitor {
 
         llvm::Type *getVoidTy() { return llvm::Type::getVoidTy(*context); }
 
+        llvm::Type *getCharTy() {
+            //todo: define encoding in documentation
+            return llvm::IntegerType::get(*context, 8);
+        }
+
+        llvm::Type *getStringTy() {
+            return getCharTy()->getPointerTo();
+        }
+
         void checkNumberOperands(const scanning::Token &op, llvm::Value *left, llvm::Value *right) {
             if (left->getType() == getDoubleTy() && right->getType() == getDoubleTy()) {
                 return;
@@ -129,6 +138,39 @@ namespace visitor {
                                 llvm::Value *operand) {
             if (operand->getType() == getDoubleTy()) return;
             throw RuntimeError{op, "Operand must be a number."};
+        }
+
+        // taken from https://stackoverflow.com/a/51811344
+        // todo: make this method more efficient
+        llvm::Value *convertStringToIR(const std::string &value) {
+            auto charType = getCharTy();
+
+
+            //1. Initialize chars vector
+            std::vector<llvm::Constant *> chars(value.length());
+            for (unsigned int i = 0; i < value.size(); i++) {
+                chars[i] = llvm::ConstantInt::get(charType, value[i]);
+            }
+
+            //1b. add a zero terminator too
+            chars.push_back(llvm::ConstantInt::get(charType, 0));
+
+
+            //2. Initialize the string from the characters
+            auto stringType = llvm::ArrayType::get(charType, chars.size());
+
+            //3. Create the declaration statement
+            auto hash = std::hash<std::string>{}(value);
+            auto globalDeclaration = (llvm::GlobalVariable *) module->getOrInsertGlobal(std::to_string(hash) + ".str",
+                                                                                        stringType);
+            globalDeclaration->setInitializer(llvm::ConstantArray::get(stringType, chars));
+            globalDeclaration->setConstant(true);
+            globalDeclaration->setLinkage(llvm::GlobalValue::LinkageTypes::PrivateLinkage);
+            globalDeclaration->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Global);
+
+
+            //4. Return a cast to an i8*
+            return static_cast<llvm::Value*>(llvm::ConstantExpr::getBitCast(globalDeclaration, charType->getPointerTo()));
         }
 
         /* block helpers */
@@ -164,6 +206,9 @@ namespace visitor {
 
             llvm::FunctionType *printForBool = llvm::FunctionType::get(getVoidTy(), {getBoolTy()}, false);
             createFnDecl(printForBool, "__yyd_print_bool");
+
+            llvm::FunctionType *printForStr = llvm::FunctionType::get(getVoidTy(), {getStringTy()}, false);
+            createFnDecl(printForStr, "__yyd_print_string");
         }
     };
 }

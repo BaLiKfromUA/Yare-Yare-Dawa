@@ -1,11 +1,16 @@
 print 1 == 2;         // false
 print 1 != 2;         // true
-// print "cat" != "dog"; // true
-// print 314 == "pi"; // false
-// print 123 == "123"; // false (NO IMPLICIT OPERATIONS)
+
+print "cat" != "dog"; // true
+print "cat" == "cat"; // true
+print 314 == "pi"; // false
+print 123 == "123"; // false (NO IMPLICIT OPERATIONS)
 
 print !true;  // false
 print !false; // true
+
+print !"balik"; // false
+print !""; // false
 
 print (true and false); // false
 print (true and true);  // true
