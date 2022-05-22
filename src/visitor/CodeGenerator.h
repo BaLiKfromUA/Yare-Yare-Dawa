@@ -23,6 +23,8 @@
 namespace visitor {
     class CodeGenerator final : public AstVisitor {
     private:
+        size_t scope_id = 0;
+
         std::unique_ptr<llvm::LLVMContext> context;
         std::unique_ptr<llvm::Module> module;
         std::unique_ptr<llvm::IRBuilder<>> builder;
@@ -150,8 +152,7 @@ namespace visitor {
         }
 
         void executeBlock(const std::vector<std::shared_ptr<ast::Stmt>> &statements,
-                          const std::shared_ptr<Environment<llvm::Value *>> &env,
-                          const std::string &blockName);
+                          const std::shared_ptr<Environment<llvm::Value *>> &env);
 
 
         /* library helpers */

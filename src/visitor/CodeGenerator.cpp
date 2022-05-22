@@ -136,19 +136,20 @@ namespace visitor {
     }
 
     std::any CodeGenerator::visitBlockStmt(const std::shared_ptr<ast::Block> &stmt) {
-        executeBlock(stmt->statements, std::make_shared<Environment<llvm::Value *>>(environment), "scope");
+        executeBlock(stmt->statements, std::make_shared<Environment<llvm::Value *>>(environment));
         return {};
     }
 
     void CodeGenerator::executeBlock(const std::vector<std::shared_ptr<ast::Stmt>> &statements,
-                                     const std::shared_ptr<Environment<llvm::Value *>> &env,
-                                     const std::string &blockName) {
+                                     const std::shared_ptr<Environment<llvm::Value *>> &env) {
+        ++scope_id;
 
         auto previous = this->environment;
         this->environment = env;
 
         auto blockParent = builder->GetInsertBlock()->getParent();
-        auto block = llvm::BasicBlock::Create(*context, blockName, blockParent);
+        auto block = llvm::BasicBlock::Create(*context, "begin-" + std::to_string(scope_id), blockParent);
+        auto afterBlock = llvm::BasicBlock::Create(*context, "end-" + std::to_string(scope_id));
 
         builder->CreateBr(block);
         builder->SetInsertPoint(block);
@@ -158,10 +159,16 @@ namespace visitor {
             }
         } catch (...) {
             this->environment = previous;
+            blockParent->getBasicBlockList().push_back(afterBlock);
+            builder->CreateBr(afterBlock);
+            builder->SetInsertPoint(afterBlock);
             throw;
         }
 
         this->environment = previous;
+        blockParent->getBasicBlockList().push_back(afterBlock);
+        builder->CreateBr(afterBlock);
+        builder->SetInsertPoint(afterBlock);
     }
 
     std::any CodeGenerator::visitExpressionStmt(const std::shared_ptr<ast::Expression> &stmt) {
@@ -202,7 +209,7 @@ namespace visitor {
             return nullptr; // todo: fix;
         }
 
-        // todo: check how to cast string (I guess always return false)
+        // check how to cast string (I guess always return true if not null ptr)
         condition = builder->CreateFPToUI(condition, getBoolTy());
 
         auto parent = builder->GetInsertBlock()->getParent();
@@ -217,7 +224,10 @@ namespace visitor {
 
         // Emit then value.
         builder->SetInsertPoint(thenBranch);
-        // todo: validate that thenBranch is not null!
+        if (stmt->thenBranch == nullptr) {
+            // todo: throw RuntimeError{stmt, "Expected then branch for if statement!"};
+        }
+
         execute(stmt->thenBranch);
         builder->CreateBr(mergeBranch);
 
@@ -238,7 +248,37 @@ namespace visitor {
         return {};
     }
 
+    // WARNING!!! IT'S EXTREMELY UGLY AND NOT EFFICIENT SOLUTION!!! DON'T LOOK AT IT!!!
+    // todo: refactor !!!
     std::any CodeGenerator::visitWhileStmt(const std::shared_ptr<ast::While> &stmt) {
-        return std::any();
+
+        auto parent = builder->GetInsertBlock()->getParent();
+        // Create blocks for the then and else cases.  Insert the 'then' block at the
+        // end of the function.
+        auto loopBody =
+                llvm::BasicBlock::Create(*context, "loop ", parent);
+        auto mergeBranch = llvm::BasicBlock::Create(*context, "loopcont ");
+
+        builder->CreateBr(loopBody);
+        // Emit then value.
+        builder->SetInsertPoint(loopBody);
+
+        auto condition = std::any_cast<llvm::Value *>(evaluate(stmt->condition));
+        // todo: handle that body or condition is null
+        // todo: check how to cast string (I guess always return true if not null ptr)
+        condition = builder->CreateFPToUI(condition, getBoolTy());
+
+        while (condition != nullptr && condition == builder->getTrue()) {
+            execute(stmt->body);
+
+            condition = std::any_cast<llvm::Value *>(evaluate(stmt->condition));
+            condition = builder->CreateFPToUI(condition, getBoolTy());
+        }
+
+        // Emit merge block.
+        parent->getBasicBlockList().push_back(mergeBranch);
+        builder->SetInsertPoint(mergeBranch);
+
+        return {};
     }
 }
