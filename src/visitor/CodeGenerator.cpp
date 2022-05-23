@@ -258,17 +258,6 @@ namespace visitor {
     // todo: refactor !!!
     std::any CodeGenerator::visitWhileStmt(const std::shared_ptr <ast::While> &stmt) {
 
-        auto parent = builder->GetInsertBlock()->getParent();
-        // Create blocks for the then and else cases.  Insert the 'then' block at the
-        // end of the function.
-        auto loopBody =
-                llvm::BasicBlock::Create(*context, "loop ", parent);
-        auto mergeBranch = llvm::BasicBlock::Create(*context, "loopcont ");
-
-        builder->CreateBr(loopBody);
-        // Emit then value.
-        builder->SetInsertPoint(loopBody);
-
         auto condition = std::any_cast<llvm::Value *>(evaluate(stmt->condition));
         // todo: handle that body or condition is null
         condition = convertToBoolean(condition);
@@ -279,10 +268,6 @@ namespace visitor {
             condition = std::any_cast<llvm::Value *>(evaluate(stmt->condition));
             condition = convertToBoolean(condition);
         }
-
-        // Emit merge block.
-        parent->getBasicBlockList().push_back(mergeBranch);
-        builder->SetInsertPoint(mergeBranch);
 
         return {};
     }

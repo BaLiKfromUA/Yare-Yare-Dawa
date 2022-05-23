@@ -1,0 +1,39 @@
+name: Unit testing
+
+on:
+  push:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: "Ubuntu Unit testing"
+    runs-on:  ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          wget -O - 'https://apt.llvm.org/llvm-snapshot.gpg.key' | sudo apt-key add -
+          sudo apt-add-repository "deb https://apt.llvm.org/focal/ llvm-toolchain-focal-13 main"
+          sudo apt update
+          sudo apt-get install -y llvm-13 llvm-13-dev llvm-13-tools clang-13 cmake
+
+      - name: Configure
+        run: CC=clang-13 CXX=clang++-13 cmake -G"Unix Makefiles" -Bbuild
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        working-directory: ./build
+        run: GTEST_OUTPUT=xml:test-results/ GTEST_COLOR=1 ctest -V
+
+      - name: Upload test results in case of failure
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: test_results_xml
+          path: ./build/test-results/**/*.xml

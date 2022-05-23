@@ -484,3 +484,11 @@ MigrationBackup/
 .ionide/
 
 .PVS-Studio/
+
+# integration test output
+a.out
+llvm_ir.ll
+test.output
+test_linked.ll
+test_linked.o
+yyd_lib.ll

@@ -19,5 +19,5 @@ print false == false; // true
 
 print !true; // false
 print !false; // true
-print !1.42; // false;
+print !1.42; // false
 print !0.0; // true

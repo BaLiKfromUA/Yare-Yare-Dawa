@@ -6,14 +6,11 @@ print b; // 21
 a = b * 3;
 print a; // 63
 print a / b; // 3
-print b / a; // 0.3333333
 
 print 2 + 2 * 3; // 8
 print (2 + 2) * 3; // 12
-print 0 / 0; // nan
-print 42 / 0; // inf
 
 var c = 42;
-print c;
+print c; // 42
 c = -c;
-print c;
+print c; // -42
