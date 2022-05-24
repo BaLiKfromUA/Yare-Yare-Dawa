@@ -1,11 +1,24 @@
 # Yare-Yare-Dawa
-tiny programming language for learning purpose. 
+Tiny programming language for learning purpose. 
 
+
+## Development Environment
+
+### Platform Support And Requirements
+
+**Yare-Yare-Dawa** has been tested on **Ubuntu 20.04** and **Ubuntu 22.04**. 
+
+In order to build **Yare-Yare-Dawa** you will need:
+
+* **LLVM 13** and **Clang 13**
+* C++ compiler that supports **C++17**
+* **CMake 3.21** or higher
+
+### Installing Clang and LLVM On Ubuntu
 
 ```bash
-clang++-13 ./lib/yyd_lib.cpp -S -emit-llvm
-llvm-link-13 examples/test.ll ./yyd_lib.ll -o test_linked.ll
-llc-13 -filetype=obj test_linked.ll
-clang++-13 test_linked.o
-./a.out
+  wget -O - 'https://apt.llvm.org/llvm-snapshot.gpg.key' | sudo apt-key add -
+  sudo apt-add-repository "deb https://apt.llvm.org/focal/ llvm-toolchain-focal-13 main"
+  sudo apt update
+  sudo apt-get install -y llvm-13 llvm-13-dev llvm-13-tools clang-13
 ```
