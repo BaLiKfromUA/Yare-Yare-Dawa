@@ -1,6 +1,12 @@
 # Yare-Yare-Dawa
 Tiny programming language for learning purpose. 
 
+```cpp
+    // Your first Yare-Yare-Dawa program!
+    print "Hello, World!";
+```
+
+## [Language Description (WIP)](docs/language_description.md)
 
 ## Development Environment
 
