@@ -8,6 +8,10 @@ Tiny programming language for learning purpose.
 
 ## [Language Description (WIP)](docs/language_description.md)
 
+## High-level architecture of the project 
+
+![](docs/img/Architecture.png)
+
 ## Development Environment
 
 ### Platform Support And Requirements
