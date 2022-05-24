@@ -14,17 +14,33 @@
 #include "visitor/Interpreter.h"
 #include "visitor/CodeGenerator.h"
 
+enum RunMode {
+    INTERPRETER,
+    COMPILER
+};
+
 
 class YareYareDawaManager {
 public:
+    explicit YareYareDawaManager(RunMode mode) {
+        if (mode == INTERPRETER) {
+            _visitor = new visitor::Interpreter();
+        } else {
+            _visitor = new visitor::CodeGenerator();
+        }
+    }
+
+    ~YareYareDawaManager() {
+        delete _visitor;
+    }
+
     /*=== entry points ===*/
     void runFile(std::string_view filePath);
 
     void runPrompt();
 
 private:
-    // todo: use flexible interface depends on modes
-    visitor::CodeGenerator _generator{};
+    visitor::AstVisitor *_visitor{};
 
     void run(std::string_view source);
 };

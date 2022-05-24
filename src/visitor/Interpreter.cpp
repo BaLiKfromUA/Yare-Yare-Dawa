@@ -2,6 +2,7 @@
 // Created by balik on 4/15/2022.
 //
 
+#include <iomanip>
 #include "Interpreter.h"
 
 namespace visitor {
@@ -99,10 +100,19 @@ namespace visitor {
         if (object.type() == typeid(double)) {
             std::string text = std::to_string(
                     std::any_cast<double>(object));
-            if (text[text.length() - 2] == '.' &&
-                text[text.length() - 1] == '0') {
-                text = text.substr(0, text.length() - 2);
+
+            int ind = text.length() - 1;
+
+            while (text[ind] == '0') {
+                --ind;
             }
+
+            if (text[ind] == '.') {
+                text = text.substr(0, ind);
+            } else {
+                text = text.substr(0, ind + 1);
+            }
+
             return text;
         }
 

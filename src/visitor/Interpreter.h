@@ -84,9 +84,15 @@ namespace visitor {
         // we follow Ruby’s simple rule: false and nil are false, and everything else is true.
         static bool isTruthy(const std::any &object) {
             if (object.type() == typeid(nullptr)) return false;
+
             if (object.type() == typeid(bool)) {
                 return std::any_cast<bool>(object);
             }
+
+            if (object.type() == typeid(double)) {
+                return std::any_cast<double>(object) != 0.0;
+            }
+
             return true;
         }
 
