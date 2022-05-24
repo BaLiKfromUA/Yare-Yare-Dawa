@@ -34,7 +34,7 @@ false; // Not *not* false.
 
 ### Expressions
 
-### Arithmetic
+#### Arithmetic
 
 Binary:
 ```cpp
@@ -49,7 +49,7 @@ Unary:
 -negateMe;
 ```
 
-### Comparison and equality
+#### Comparison and equality
 
 ```cpp
 less < than;
@@ -66,7 +66,7 @@ greaterThan >= orEqual;
 123 == "123"; // false.
 ```
 
-### Logical operations
+#### Logical operations
 
 ```cpp
 !true;  // false.
@@ -79,7 +79,7 @@ false or false; // false.
 true or false;  // true.
 ```
 
-### Precedence and grouping
+#### Precedence and grouping
 
 ```javascript
 var average = (min + max) / 2;
