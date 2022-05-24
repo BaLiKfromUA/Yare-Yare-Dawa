@@ -32,3 +32,11 @@ In order to build **Yare-Yare-Dawa** you will need:
   sudo apt update
   sudo apt-get install -y llvm-13 llvm-13-dev llvm-13-tools clang-13
 ```
+
+### Run integration tests locally
+
+```bash
+  cmake -Bbuild
+  cmake --build build
+  ./integration-tests/test_runner.sh
+```
