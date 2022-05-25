@@ -1,7 +1,7 @@
 //
 // Created by balik on 07.05.22.
 //
-
+#ifdef __linux__
 #include "CodeGenerator.h"
 
 namespace visitor {
@@ -272,3 +272,4 @@ namespace visitor {
         return {};
     }
 }
+#endif

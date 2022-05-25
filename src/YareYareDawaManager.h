@@ -26,7 +26,11 @@ public:
         if (mode == INTERPRETER) {
             _visitor = new visitor::Interpreter();
         } else {
+#ifdef __linux__
             _visitor = new visitor::CodeGenerator();
+#else
+            throw std::runtime_error("Compiler Mode supported only for Linux!");
+#endif
         }
     }
 

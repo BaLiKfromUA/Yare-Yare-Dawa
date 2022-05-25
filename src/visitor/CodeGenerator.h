@@ -1,7 +1,7 @@
 //
 // Created by balik on 07.05.22.
 //
-
+#ifdef __linux__
 #ifndef YARE_YARE_DAWA_CODEGENERATOR_H
 #define YARE_YARE_DAWA_CODEGENERATOR_H
 
@@ -221,3 +221,4 @@ namespace visitor {
 
 
 #endif //YARE_YARE_DAWA_CODEGENERATOR_H
+#endif

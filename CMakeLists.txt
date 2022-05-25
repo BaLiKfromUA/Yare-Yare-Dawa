@@ -11,16 +11,15 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif ()
 
-# LLVM todo: make it optional depends on variable
+if(LINUX)
+    find_package(LLVM REQUIRED CONFIG)
 
-find_package(LLVM REQUIRED CONFIG)
+    message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+    message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-
-# use llvm-config --components and some guessing to determine components
-llvm_map_components_to_libnames(llvm_libs support core codegen irreader)
-
+    # use llvm-config --components and some guessing to determine components
+    llvm_map_components_to_libnames(llvm_libs support core codegen irreader)
+endif()
 
 # install Google test and enable tests
 include(FetchContent)
@@ -36,7 +35,8 @@ enable_testing()
 
 # modules enabling
 include_directories(src)
-include_directories(${LLVM_INCLUDE_DIRS})
-
+if(LINUX)
+    include_directories(${LLVM_INCLUDE_DIRS})
+endif()
 add_subdirectory(src)
 add_subdirectory(unit-tests)
