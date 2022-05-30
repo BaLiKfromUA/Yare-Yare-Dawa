@@ -20,6 +20,10 @@ namespace ast {
 
     class Expression;
 
+    class Function;
+
+    class Return;
+
     class Print;
 
     class Var;
@@ -30,17 +34,21 @@ namespace ast {
 
     class StmtVisitor {
     public:
-        virtual std::any visitBlockStmt(const std::shared_ptr<Block> &stmt) = 0;
+        virtual std::any visitBlockStmt(const std::shared_ptr<ast::Block> &stmt) = 0;
 
-        virtual std::any visitExpressionStmt(const std::shared_ptr<Expression> &stmt) = 0;
+        virtual std::any visitExpressionStmt(const std::shared_ptr<ast::Expression> &stmt) = 0;
 
-        virtual std::any visitPrintStmt(const std::shared_ptr<Print> &stmt) = 0;
+        virtual std::any visitPrintStmt(const std::shared_ptr<ast::Print> &stmt) = 0;
 
-        virtual std::any visitVarStmt(const std::shared_ptr<Var> &stmt) = 0;
+        virtual std::any visitVarStmt(const std::shared_ptr<ast::Var> &stmt) = 0;
 
-        virtual std::any visitIfStmt(const std::shared_ptr<If> &stmt) = 0;
+        virtual std::any visitIfStmt(const std::shared_ptr<ast::If> &stmt) = 0;
 
-        virtual std::any visitWhileStmt(const std::shared_ptr<While> &stmt) = 0;
+        virtual std::any visitWhileStmt(const std::shared_ptr<ast::While> &stmt) = 0;
+
+        virtual std::any visitFunctionStmt(std::shared_ptr<ast::Function> stmt) = 0;
+
+        virtual std::any visitReturnStmt(std::shared_ptr<ast::Return> stmt) = 0;
 
         virtual ~StmtVisitor() = default;
     };
@@ -99,7 +107,7 @@ namespace ast {
         const std::shared_ptr<Expr> initializer;
     };
 
-    class If : public Stmt, public std::enable_shared_from_this<If> {
+    class If final : public Stmt, public std::enable_shared_from_this<If> {
     public:
         If(std::shared_ptr<Expr> condition, std::shared_ptr<Stmt> thenBranch, std::shared_ptr<Stmt> elseBranch)
                 : condition{std::move(condition)}, thenBranch{std::move(thenBranch)},
@@ -114,7 +122,7 @@ namespace ast {
         const std::shared_ptr<Stmt> elseBranch;
     };
 
-    class While : public Stmt, public std::enable_shared_from_this<While> {
+    class While final : public Stmt, public std::enable_shared_from_this<While> {
     public:
         While(std::shared_ptr<Expr> condition, std::shared_ptr<Stmt> body)
                 : condition{std::move(condition)}, body{std::move(body)} {}
@@ -125,6 +133,33 @@ namespace ast {
 
         const std::shared_ptr<Expr> condition;
         const std::shared_ptr<Stmt> body;
+    };
+
+    class Function final : public Stmt, public std::enable_shared_from_this<Function> {
+    public:
+        Function(Token name, std::vector<Token> params, std::vector<std::shared_ptr<Stmt>> body)
+                : name{std::move(name)}, params{std::move(params)}, body{std::move(body)} {}
+
+        std::any accept(StmtVisitor &visitor) override {
+            return visitor.visitFunctionStmt(shared_from_this());
+        }
+
+        const Token name;
+        const std::vector<Token> params;
+        const std::vector<std::shared_ptr<Stmt>> body;
+    };
+
+    class Return final : public Stmt, public std::enable_shared_from_this<Return> {
+    public:
+        Return(Token keyword, std::shared_ptr<Expr> value)
+                : keyword{std::move(keyword)}, value{std::move(value)} {}
+
+        std::any accept(StmtVisitor &visitor) override {
+            return visitor.visitReturnStmt(shared_from_this());
+        }
+
+        const Token keyword;
+        const std::shared_ptr<Expr> value;
     };
 }
 #endif //YARE_YARE_DAWA_STATEMENT_H

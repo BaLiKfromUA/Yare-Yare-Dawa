@@ -93,16 +93,43 @@ namespace parsing {
 
         /*== Grammar ==*/
 
-        // declaration    → varDecl | statement ;
+        // declaration    → varDecl | statement | funDecl ;
         std::shared_ptr<ast::Stmt> declaration() {
             try {
                 if (match(scanning::VAR)) return varDeclaration();
+                if (match(scanning::FUN)) return function("function");
 
                 return statement();
             } catch (const ParseError &ignored) {
                 synchronize();
                 return nullptr;
             }
+        }
+
+        // funDecl        → "fun" function ;
+        // function       → IDENTIFIER "(" parameters? ")" block ;
+        // parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
+        std::shared_ptr<ast::Function> function(const std::string &kind) {
+            auto name = consume(scanning::IDENTIFIER, "Expect " + kind + " name.");
+            consume(scanning::LEFT_PAREN, "Expect '(' after " + kind + " name.");
+            std::vector<scanning::Token> parameters;
+            if (!check(scanning::RIGHT_PAREN)) {
+                do {
+                    if (parameters.size() >= 255) {
+                        error(peek(), "Can't have more than 255 parameters.");
+                    }
+
+                    parameters.push_back(
+                            consume(scanning::IDENTIFIER, "Expect parameter name."));
+                } while (match(scanning::COMMA));
+            }
+            consume(scanning::RIGHT_PAREN, "Expect ')' after parameters.");
+
+            consume(scanning::LEFT_BRACE, "Expect '{' before " + kind + " body.");
+            std::vector<std::shared_ptr<ast::Stmt>> body = block();
+            return std::make_shared<ast::Function>(std::move(name),
+                                                   std::move(parameters),
+                                                   std::move(body));
         }
 
         // varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
@@ -119,11 +146,12 @@ namespace parsing {
         }
 
 
-        // statement      → exprStmt | ifStmt | whileStmt | forStmt | printStmt | block ;
+        // statement      → exprStmt | ifStmt | whileStmt | forStmt | printStmt | block  | returnStmt;
         std::shared_ptr<ast::Stmt> statement() {
             if (match(scanning::IF)) return ifStatement();
             if (match(scanning::WHILE)) return whileStatement();
             if (match(scanning::FOR)) return forStatement();
+            if (match(scanning::RETURN)) return returnStatement();
             if (match(scanning::PRINT)) return printStatement();
             if (match(scanning::LEFT_BRACE)) return std::make_shared<ast::Block>(block());
 
@@ -139,6 +167,18 @@ namespace parsing {
 
         // ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
         std::shared_ptr<ast::Stmt> ifStatement();
+
+        // returnStmt     → "return" expression? ";" ;
+        std::shared_ptr<ast::Stmt> returnStatement() {
+            auto keyword = previous();
+            std::shared_ptr<ast::Expr> value = nullptr;
+            if (!check(scanning::SEMICOLON)) {
+                value = expression();
+            }
+
+            consume(scanning::SEMICOLON, "Expect ';' after return value.");
+            return std::make_shared<ast::Return>(keyword, value);
+        }
 
         // block          → "{" declaration* "}" ;
         std::vector<std::shared_ptr<ast::Stmt>> block() {
@@ -208,8 +248,14 @@ namespace parsing {
         // factor         → unary ( ( "/" | "*" ) unary )* ;
         std::shared_ptr<ast::Expr> factor();
 
-        // unary          → ( "!" | "-" ) unary | primary ;
+        // unary          → ( "!" | "-" ) unary | call ;
         std::shared_ptr<ast::Expr> unary();
+
+        // call           → primary ( "(" arguments? ")" )* ;
+        // arguments      → expression ( "," expression )* ;
+        std::shared_ptr<ast::Expr> call();
+
+        std::shared_ptr<ast::Expr> finishCall(const std::shared_ptr<ast::Expr> &callee);
 
         // primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
         std::shared_ptr<ast::Expr> primary();

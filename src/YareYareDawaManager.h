@@ -19,7 +19,6 @@ enum RunMode {
     COMPILER
 };
 
-
 class YareYareDawaManager {
 public:
     explicit YareYareDawaManager(RunMode mode) {
@@ -44,7 +43,7 @@ public:
     void runPrompt();
 
 private:
-    visitor::AstVisitor *_visitor{};
+    visitor::AstVisitor *_visitor = nullptr;
 
     void run(std::string_view source);
 };

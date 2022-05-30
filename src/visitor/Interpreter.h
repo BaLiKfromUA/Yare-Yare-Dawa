@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <utility>
+#include <chrono>
 #include "Errors.h"
 #include "scanning/Token.h"
 #include "scanning/TokenType.h"
@@ -14,13 +15,34 @@
 #include "ast/Statement.h"
 #include "Environment.h"
 #include "AstVisitor.h"
-
+#include "visitor/interpreter/YareYareDawaFunction.h"
 
 namespace visitor {
+
+    class NativeClock : public YareYareDawaCallable {
+    public:
+        int arity() override { return 0; }
+
+        std::any call(Interpreter &interpreter,
+                      std::vector<std::any> arguments) override {
+            auto ticks = std::chrono::system_clock::now().time_since_epoch();
+            return std::chrono::duration<double>{ticks}.count() / 1000.0;
+        }
+
+        std::string toString() override { return "<native fn>"; }
+    };
+
     class Interpreter final : public AstVisitor {
-        std::shared_ptr<Environment<std::any>> environment{new Environment};
+        friend class YareYareDawaFunction;
+
+        std::shared_ptr<Environment<std::any>> globals{new Environment};
+        std::shared_ptr<Environment<std::any>> environment = globals;
 
     public:
+        Interpreter() {
+            globals->define("clock", std::shared_ptr<NativeClock>{});
+        }
+
         void visitAST(const std::vector<std::shared_ptr<ast::Stmt>> &statements) override {
             try {
                 for (const std::shared_ptr<ast::Stmt> &statement: statements) {
@@ -48,6 +70,8 @@ namespace visitor {
 
         std::any visitVariableExpr(const std::shared_ptr<ast::Variable> &expr) override;
 
+        std::any visitCallExpr(const std::shared_ptr<ast::Call> &expr) override;
+
         std::any visitBlockStmt(const std::shared_ptr<ast::Block> &stmt) override;
 
         std::any visitExpressionStmt(const std::shared_ptr<ast::Expression> &stmt) override;
@@ -62,10 +86,13 @@ namespace visitor {
 
         std::any visitWhileStmt(const std::shared_ptr<ast::While> &stmt) override;
 
+        std::any visitFunctionStmt(std::shared_ptr<ast::Function> stmt) override;
+
+        std::any visitReturnStmt(std::shared_ptr<ast::Return> stmt) override;
+
     private:
         void executeBlock(const std::vector<std::shared_ptr<ast::Stmt>> &statements,
                           const std::shared_ptr<Environment<>> &env);
-
 
         static void checkNumberOperand(const scanning::Token &op,
                                        const std::any &operand) {

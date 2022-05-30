@@ -28,21 +28,25 @@ namespace ast {
 
     class Logical;
 
+    class Call;
+
     class ExprVisitor {
     public:
-        virtual std::any visitAssignExpr(const std::shared_ptr<Assign> &expr) = 0;
+        virtual std::any visitAssignExpr(const std::shared_ptr<ast::Assign> &expr) = 0;
 
-        virtual std::any visitBinaryExpr(const std::shared_ptr<Binary> &expr) = 0;
+        virtual std::any visitBinaryExpr(const std::shared_ptr<ast::Binary> &expr) = 0;
 
-        virtual std::any visitGroupingExpr(const std::shared_ptr<Grouping> &expr) = 0;
+        virtual std::any visitGroupingExpr(const std::shared_ptr<ast::Grouping> &expr) = 0;
 
-        virtual std::any visitLiteralExpr(const std::shared_ptr<Literal> &expr) = 0;
+        virtual std::any visitLiteralExpr(const std::shared_ptr<ast::Literal> &expr) = 0;
 
-        virtual std::any visitUnaryExpr(const std::shared_ptr<Unary> &expr) = 0;
+        virtual std::any visitUnaryExpr(const std::shared_ptr<ast::Unary> &expr) = 0;
 
-        virtual std::any visitVariableExpr(const std::shared_ptr<Variable> &expr) = 0;
+        virtual std::any visitVariableExpr(const std::shared_ptr<ast::Variable> &expr) = 0;
 
-        virtual std::any visitLogicalExpr(const std::shared_ptr<Logical> &expr) = 0;
+        virtual std::any visitLogicalExpr(const std::shared_ptr<ast::Logical> &expr) = 0;
+
+        virtual std::any visitCallExpr(const std::shared_ptr<ast::Call> &expr) = 0;
 
         virtual ~ExprVisitor() = default;
     };
@@ -140,6 +144,20 @@ namespace ast {
         }
 
         const Token name;
+    };
+
+    class Call final : public Expr, public std::enable_shared_from_this<Call> {
+    public:
+        Call(std::shared_ptr<Expr> callee, Token paren, std::vector<std::shared_ptr<Expr>> arguments)
+                : callee{std::move(callee)}, paren{std::move(paren)}, arguments{std::move(arguments)} {}
+
+        std::any accept(ExprVisitor &visitor) override {
+            return visitor.visitCallExpr(shared_from_this());
+        }
+
+        const std::shared_ptr<Expr> callee;
+        const Token paren;
+        const std::vector<std::shared_ptr<Expr>> arguments;
     };
 }
 

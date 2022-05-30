@@ -62,7 +62,7 @@ namespace parsing {
             return std::make_shared<ast::Unary>(std::move(op), right);
         }
 
-        return primary();
+        return call();
     }
 
     std::shared_ptr<ast::Expr> Parser::primary() {
@@ -200,4 +200,38 @@ namespace parsing {
 
         return body;
     }
+
+    std::shared_ptr<ast::Expr> Parser::call() {
+        auto expr = primary();
+
+        while (true) {
+            if (match(scanning::LEFT_PAREN)) {
+                expr = finishCall(expr);
+            } else {
+                break;
+            }
+        }
+
+        return expr;
+    }
+
+    std::shared_ptr<ast::Expr> Parser::finishCall(const std::shared_ptr<ast::Expr> &callee) {
+        std::vector<std::shared_ptr<ast::Expr>> arguments;
+        if (!check(scanning::RIGHT_PAREN)) {
+            do {
+                if (arguments.size() >= 255) {
+                    error(peek(), "Can't have more than 255 arguments.");
+                }
+                arguments.push_back(expression());
+            } while (match(scanning::COMMA));
+        }
+
+        auto paren = consume(scanning::RIGHT_PAREN,
+                             "Expect ')' after arguments.");
+
+        return std::make_shared<ast::Call>(callee,
+                                           std::move(paren),
+                                           std::move(arguments));
+    }
+
 }

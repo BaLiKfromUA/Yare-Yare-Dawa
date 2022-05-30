@@ -4,6 +4,7 @@
 
 #include <iomanip>
 #include "Interpreter.h"
+#include "visitor/interpreter/YareYareDawaReturn.h"
 
 namespace visitor {
 
@@ -205,5 +206,46 @@ namespace visitor {
             execute(stmt->body);
         }
         return {};
+    }
+
+    std::any Interpreter::visitCallExpr(const std::shared_ptr<ast::Call> &expr) {
+        std::any callee = evaluate(expr->callee);
+
+        std::vector<std::any> arguments;
+        for (const std::shared_ptr<ast::Expr> &argument: expr->arguments) {
+            arguments.push_back(evaluate(argument));
+        }
+
+        // Pointers in a std::any wrapper must be unwrapped before they
+        // can be cast.
+        std::shared_ptr<YareYareDawaCallable> function;
+
+        if (callee.type() == typeid(std::shared_ptr<YareYareDawaFunction>)) {
+            function = std::any_cast<std::shared_ptr<YareYareDawaFunction>>(callee);
+        } else {
+            throw RuntimeError{expr->paren,
+                               "Can only call functions and classes."};
+        }
+
+        if (arguments.size() != function->arity()) {
+            throw RuntimeError{expr->paren, "Expected " +
+                                            std::to_string(function->arity()) + " arguments but got " +
+                                            std::to_string(arguments.size()) + "."};
+        }
+
+        return function->call(*this, std::move(arguments));
+    }
+
+    std::any Interpreter::visitFunctionStmt(std::shared_ptr<ast::Function> stmt) {
+        auto function = std::make_shared<YareYareDawaFunction>(stmt, environment);
+        environment->define(stmt->name.lexeme, function);
+        return {};
+    }
+
+    std::any Interpreter::visitReturnStmt(std::shared_ptr<ast::Return> stmt) {
+        std::any value = nullptr;
+        if (stmt->value != nullptr) value = evaluate(stmt->value);
+
+        throw YareYareDawaReturn{value};
     }
 }
