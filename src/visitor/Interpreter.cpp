@@ -222,6 +222,8 @@ namespace visitor {
 
         if (callee.type() == typeid(std::shared_ptr<YareYareDawaFunction>)) {
             function = std::any_cast<std::shared_ptr<YareYareDawaFunction>>(callee);
+        } else if (callee.type() == typeid(std::shared_ptr<NativeClock>)) {
+            function = std::any_cast<std::shared_ptr<NativeClock>>(callee);
         } else {
             throw RuntimeError{expr->paren,
                                "Can only call functions and classes."};

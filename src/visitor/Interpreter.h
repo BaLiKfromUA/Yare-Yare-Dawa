@@ -6,6 +6,7 @@
 #define YARE_YARE_DAWA_INTERPRETER_H
 
 #include <iostream>
+#include <memory>
 #include <utility>
 #include <chrono>
 #include "Errors.h"
@@ -40,7 +41,7 @@ namespace visitor {
 
     public:
         Interpreter() {
-            globals->define("clock", std::shared_ptr<NativeClock>{});
+            globals->define("clock", std::make_shared<NativeClock>());
         }
 
         void visitAST(const std::vector<std::shared_ptr<ast::Stmt>> &statements) override {
