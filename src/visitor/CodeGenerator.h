@@ -23,12 +23,17 @@
 namespace visitor {
     class CodeGenerator final : public AstVisitor {
     private:
+        struct EnvRecord {
+            llvm::Value* allocation;
+            llvm::Type* type;
+        };
+
         size_t scope_id = 0;
 
         std::unique_ptr<llvm::LLVMContext> context;
         std::unique_ptr<llvm::Module> module;
         std::unique_ptr<llvm::IRBuilder<>> builder;
-        std::shared_ptr<Environment<llvm::Value *>> environment{new Environment<llvm::Value *>};
+        std::shared_ptr<Environment<EnvRecord>> environment{new Environment<EnvRecord>};
         std::unique_ptr<llvm::Function *> mainFunction;
 
     public:
@@ -82,23 +87,16 @@ namespace visitor {
 
         std::any visitWhileStmt(const std::shared_ptr<ast::While> &stmt) override;
 
+        std::any visitCallExpr(const std::shared_ptr<ast::Call> &expr) override;
+
+        std::any visitFunctionStmt(std::shared_ptr<ast::Function> stmt) override;
+
+        std::any visitReturnStmt(std::shared_ptr<ast::Return> stmt) override;
 
     private:
         /* debug helpers */
         void dumpIR() {
             module->print(llvm::outs(), nullptr);
-        }
-
-        std::string dumpVariablesToString() {
-            std::string outstr;
-            llvm::raw_string_ostream oss(outstr);
-            auto vars = environment->get_values();
-            for (auto var: vars) {
-                var->print(oss);
-                oss << "\n";
-            }
-
-            return oss.str();
         }
 
         std::string dumpIRToString() {
@@ -200,7 +198,7 @@ namespace visitor {
         }
 
         void executeBlock(const std::vector<std::shared_ptr<ast::Stmt>> &statements,
-                          const std::shared_ptr<Environment<llvm::Value *>> &env);
+                          const std::shared_ptr<Environment<EnvRecord>> &env);
 
 
         /* library helpers */
