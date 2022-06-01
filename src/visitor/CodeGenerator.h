@@ -143,7 +143,6 @@ namespace visitor {
         llvm::Value *convertStringToIR(const std::string &value) {
             auto charType = getCharTy();
 
-
             //1. Initialize chars vector
             std::vector<llvm::Constant *> chars(value.length());
             for (unsigned int i = 0; i < value.size(); i++) {

@@ -1,15 +1,20 @@
 print 1 == 2;         // false
 print 1 != 2;         // true
 
-print "cat" != "dog"; // true
-print "cat" == "cat"; // true
+var dog = "dog";
+var cat = "cat";
+
+print cat != dog; // true
+print cat == "cat"; // true
 print 314 == "pi"; // false
 print 123 == "123"; // false (NO IMPLICIT OPERATIONS)
 
 print !true;  // false
 print !false; // true
 
-print !"balik"; // false
+var balik = "balik";
+
+print !balik; // false
 print !""; // false
 
 print (true and false); // false
@@ -19,3 +24,6 @@ print (false or false); // false
 print (true or false);  // true
 print (false or true);  // true
 print (true or true);  // true
+
+print (balik or false); // true
+print (balik and true); // true

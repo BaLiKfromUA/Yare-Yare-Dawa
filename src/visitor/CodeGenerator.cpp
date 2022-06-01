@@ -130,8 +130,8 @@ namespace visitor {
 
     std::any CodeGenerator::visitVariableExpr(const std::shared_ptr<ast::Variable> &expr) {
         auto record = environment->get(expr->name);
-        // todo: check null
-        return static_cast<llvm::Value *>(builder->CreateLoad(record.type, record.allocation, expr->name.lexeme));
+        auto load = builder->CreateLoad(record.type, record.allocation, expr->name.lexeme);
+        return static_cast<llvm::Value *>(load);
     }
 
     std::any CodeGenerator::visitLogicalExpr(const std::shared_ptr<ast::Logical> &expr) {
@@ -272,20 +272,30 @@ namespace visitor {
         return {};
     }
 
-    // WARNING!!! IT'S EXTREMELY UGLY AND NOT EFFICIENT SOLUTION!!! DON'T LOOK AT IT!!!
-    // todo: refactor !!!
     std::any CodeGenerator::visitWhileStmt(const std::shared_ptr<ast::While> &stmt) {
 
         auto condition = std::any_cast<llvm::Value *>(evaluate(stmt->condition));
         // todo: handle that body or condition is null
         condition = convertToBoolean(condition);
 
-        while (condition != nullptr && condition == builder->getTrue()) {
-            execute(stmt->body);
+        auto parent = builder->GetInsertBlock()->getParent();
+        auto loopBody =
+                llvm::BasicBlock::Create(*context, "loop", parent);
+        auto mergeBranch = llvm::BasicBlock::Create(*context, "loopcont");
 
-            condition = std::any_cast<llvm::Value *>(evaluate(stmt->condition));
-            condition = convertToBoolean(condition);
+        builder->CreateCondBr(condition, loopBody, mergeBranch);
+        builder->SetInsertPoint(loopBody);
+        if (stmt->body != nullptr) {
+            execute(stmt->body);
         }
+
+        condition = std::any_cast<llvm::Value *>(evaluate(stmt->condition));
+        // todo: handle that body or condition is null
+        condition = convertToBoolean(condition);
+        builder->CreateCondBr(condition, loopBody, mergeBranch);
+        // Emit merge block.
+        parent->getBasicBlockList().push_back(mergeBranch);
+        builder->SetInsertPoint(mergeBranch);
 
         return {};
     }

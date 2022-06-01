@@ -184,12 +184,12 @@ namespace visitor {
         std::any left = evaluate(expr->left);
 
         if (expr->op.type == scanning::OR) {
-            if (isTruthy(left)) return left;
+            if (isTruthy(left)) return true;
         } else {
-            if (!isTruthy(left)) return left;
+            if (!isTruthy(left)) return false;
         }
 
-        return evaluate(expr->right);
+        return isTruthy(evaluate(expr->right));
     }
 
     std::any Interpreter::visitIfStmt(const std::shared_ptr<ast::If> &stmt) {
