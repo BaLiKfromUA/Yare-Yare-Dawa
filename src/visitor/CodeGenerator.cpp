@@ -11,12 +11,10 @@ namespace visitor {
         auto value = std::any_cast<llvm::Value *>(evaluate(expr->value));
 
         // compare types
-        // todo: check null
         auto oldRecord = environment->get(expr->name);
-        if (oldRecord.type != value->getType()) {
+        if (value == nullptr || oldRecord.type != value->getType()) {
             throw RuntimeError(expr->name, "Trying to assign incorrect type!");
         }
-
 
         builder->CreateStore(value, oldRecord.allocation);
 
@@ -74,10 +72,10 @@ namespace visitor {
                     return builder->CreateFAdd(left, right, "tmp_add");
                 }
 
-                /* todo:
-                if (left.type() == typeid(std::string) && right.type() == typeid(std::string)) {
-                    return std::any_cast<std::string>(left) + std::any_cast<std::string>(right);
-                }*/
+                if (left->getType() == getStringTy() && right->getType() == getStringTy()) {
+                    llvm::Function *calleeF = module->getFunction("__yyd_string_concat");
+                    return static_cast<llvm::Value *>(builder->CreateCall(calleeF, {left, right}));
+                }
 
                 throw RuntimeError{expr->op, "Operands must be two numbers or two strings."};
             case scanning::SLASH:

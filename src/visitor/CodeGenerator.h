@@ -205,7 +205,6 @@ namespace visitor {
 
         /* library helpers */
         void enableStandardLibrary() {
-            // prototypes for print function
             llvm::FunctionType *printForDouble = llvm::FunctionType::get(getVoidTy(), {getDoubleTy()}, false);
             // creating decls for modules
             createFnDecl(printForDouble, "__yyd_print_double");
@@ -215,6 +214,10 @@ namespace visitor {
 
             llvm::FunctionType *printForStr = llvm::FunctionType::get(getVoidTy(), {getStringTy()}, false);
             createFnDecl(printForStr, "__yyd_print_string");
+
+            llvm::FunctionType *stringConcat = llvm::FunctionType::get(getStringTy(), {getStringTy(), getStringTy()},
+                                                                       false);
+            createFnDecl(stringConcat, "__yyd_string_concat");
         }
     };
 }

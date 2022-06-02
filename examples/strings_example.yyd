@@ -1,0 +1,7 @@
+var a = "balik";
+var b = "mem";
+
+print a;
+print b;
+
+print a + "_" + b;
