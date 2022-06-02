@@ -1,0 +1,36 @@
+fun testWithoutArgs() void {
+  print "0 arguments!";
+  return;
+}
+
+testWithoutArgs();
+
+fun testWithOneArg(str n) void {
+    print n;
+}
+
+testWithOneArg("1 argument!");
+
+fun testWithOneArgRecursive(num n) void {
+    if (n > 0) {
+        print n;
+        testWithOneArgRecursive(n - 1);
+    }
+}
+
+testWithOneArgRecursive(5);
+
+fun fibonacci(num n) num {
+    var result = 0;
+
+    if (n <= 1) {
+        result = n;
+    } else {
+        result = fibonacci(n - 1) + fibonacci(n - 2);
+    }
+
+    return result;
+}
+
+print fibonacci(3); // 2
+print fibonacci(7); // 13

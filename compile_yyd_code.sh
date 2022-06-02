@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-INPUT_FILE="./examples/boolean_example.yyd"
+# USE IT ONLY FOR DEBUG!
+
+INPUT_FILE="./examples/functions_example.yyd"
 
 cmake -Bbuild
 cmake --build build

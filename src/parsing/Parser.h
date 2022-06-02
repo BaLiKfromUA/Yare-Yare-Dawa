@@ -14,6 +14,7 @@
 #include "ast/Expression.h"
 #include "ast/Statement.h"
 
+// #define TOKEN_DEBUG
 
 namespace parsing {
 
@@ -28,7 +29,14 @@ namespace parsing {
 
     public:
         explicit Parser(const std::vector<scanning::Token> &tokens)
-                : tokens{tokens} {}
+                : tokens{tokens} {
+#ifdef TOKEN_DEBUG
+            for (const auto &token: tokens) {
+                std::cout << toString(token.type) << ' ';
+            }
+            std::cout << '\n';
+#endif
+        }
 
         // program        → declaration* EOF ;
         std::vector<std::shared_ptr<ast::Stmt>> parse() {
@@ -107,27 +115,53 @@ namespace parsing {
         }
 
         // funDecl        → "fun" function ;
-        // function       → IDENTIFIER "(" parameters? ")" block ;
-        // parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
+        // function       → IDENTIFIER "(" parameters? ")" TYPE block ;
+        // parameters     → IDENTIFIER ( "," TYPE IDENTIFIER )* ;
         std::shared_ptr<ast::Function> function(const std::string &kind) {
             auto name = consume(scanning::IDENTIFIER, "Expect " + kind + " name.");
             consume(scanning::LEFT_PAREN, "Expect '(' after " + kind + " name.");
-            std::vector<scanning::Token> parameters;
+            std::vector<std::pair<scanning::Token, scanning::Token>> parameters;
             if (!check(scanning::RIGHT_PAREN)) {
                 do {
                     if (parameters.size() >= 255) {
                         error(peek(), "Can't have more than 255 parameters.");
                     }
 
-                    parameters.push_back(
-                            consume(scanning::IDENTIFIER, "Expect parameter name."));
+                    auto paramType = advance();
+                    // validate type
+                    switch (paramType.type) {
+                        case scanning::STR:
+                        case scanning::NUM:
+                        case scanning::BOOL:
+                            break;
+                        case scanning::VOID:
+                            // void as an input is strange!
+                        default:
+                            throw error(paramType, "Invalid type!");
+                    }
+
+                    auto paramName = consume(scanning::IDENTIFIER, "Expect parameter name.");
+                    parameters.emplace_back(paramType, paramName);
                 } while (match(scanning::COMMA));
             }
             consume(scanning::RIGHT_PAREN, "Expect ')' after parameters.");
 
+            auto returnType = advance();
+            // validate type
+            switch (returnType.type) {
+                case scanning::VOID:
+                case scanning::STR:
+                case scanning::NUM:
+                case scanning::BOOL:
+                    break;
+                default:
+                    throw error(returnType, "Unknown type!");
+            }
+
             consume(scanning::LEFT_BRACE, "Expect '{' before " + kind + " body.");
             std::vector<std::shared_ptr<ast::Stmt>> body = block();
             return std::make_shared<ast::Function>(std::move(name),
+                                                   std::move(returnType),
                                                    std::move(parameters),
                                                    std::move(body));
         }

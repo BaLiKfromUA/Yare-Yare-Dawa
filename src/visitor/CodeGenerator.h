@@ -24,23 +24,26 @@ namespace visitor {
     class CodeGenerator final : public AstVisitor {
     private:
         struct EnvRecord {
-            llvm::Value* allocation;
-            llvm::Type* type;
+
+            EnvRecord() = default;
+
+            llvm::Value *allocation;
+            llvm::Type *type;
         };
 
-        size_t scope_id = 0;
+        size_t scopeId = 0;
+        std::shared_ptr<Environment<EnvRecord>> environment{new Environment<EnvRecord>};
 
         std::unique_ptr<llvm::LLVMContext> context;
         std::unique_ptr<llvm::Module> module;
         std::unique_ptr<llvm::IRBuilder<>> builder;
-        std::shared_ptr<Environment<EnvRecord>> environment{new Environment<EnvRecord>};
         std::unique_ptr<llvm::Function *> mainFunction;
 
     public:
         CodeGenerator() {
             // Open a new context and module.
             context = std::make_unique<llvm::LLVMContext>();
-            module = std::make_unique<llvm::Module>("default code generator", *context);
+            module = std::make_unique<llvm::Module>("Yare Yare Dawa -- IR Generator", *context);
 
             // Create a new builder for the module.
             builder = std::make_unique<llvm::IRBuilder<>>(*context);

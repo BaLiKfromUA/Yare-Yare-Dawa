@@ -27,11 +27,13 @@ namespace scanning {
         AND, CLASS, ELSE, FALSE, FUN, FOR, IF, NIL, OR,
         PRINT, RETURN, SUPER, THIS, TRUE, VAR, WHILE,
 
-        END_OF_FILE
+        END_OF_FILE,
+
+        // types
+        VOID, NUM, STR, BOOL
     };
 
 
-    // todo: fix inline
     inline std::string toString(TokenType type) {
         static const std::string strings[] = {
                 "LEFT_PAREN", "RIGHT_PAREN", "LEFT_BRACE", "RIGHT_BRACE",
@@ -43,7 +45,8 @@ namespace scanning {
                 "IDENTIFIER", "STRING", "NUMBER",
                 "AND", "CLASS", "ELSE", "FALSE", "FUN", "FOR", "IF", "NIL", "OR",
                 "PRINT", "RETURN", "SUPER", "THIS", "TRUE", "VAR", "WHILE",
-                "END_OF_FILE"
+                "END_OF_FILE",
+                "VOID", "NUM", "STR", "BOOL"
         };
 
         return strings[static_cast<int>(type)];

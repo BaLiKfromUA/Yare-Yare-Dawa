@@ -137,15 +137,18 @@ namespace ast {
 
     class Function final : public Stmt, public std::enable_shared_from_this<Function> {
     public:
-        Function(Token name, std::vector<Token> params, std::vector<std::shared_ptr<Stmt>> body)
-                : name{std::move(name)}, params{std::move(params)}, body{std::move(body)} {}
+        Function(Token name, Token returnType, std::vector<std::pair<Token, Token>> params,
+                 std::vector<std::shared_ptr<Stmt>> body)
+                : name{std::move(name)}, returnType(std::move(returnType)), params{std::move(params)},
+                  body{std::move(body)} {}
 
         std::any accept(StmtVisitor &visitor) override {
             return visitor.visitFunctionStmt(shared_from_this());
         }
 
         const Token name;
-        const std::vector<Token> params;
+        const Token returnType;
+        const std::vector<std::pair<Token, Token>> params;
         const std::vector<std::shared_ptr<Stmt>> body;
     };
 

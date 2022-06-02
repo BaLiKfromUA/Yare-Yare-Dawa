@@ -4,6 +4,7 @@
 #ifdef __linux__
 
 #include "CodeGenerator.h"
+#include "visitor/interpreter/YareYareDawaReturn.h"
 
 namespace visitor {
     std::any CodeGenerator::visitAssignExpr(const std::shared_ptr<ast::Assign> &expr) {
@@ -129,9 +130,19 @@ namespace visitor {
     }
 
     std::any CodeGenerator::visitVariableExpr(const std::shared_ptr<ast::Variable> &expr) {
-        auto record = environment->get(expr->name);
-        auto load = builder->CreateLoad(record.type, record.allocation, expr->name.lexeme);
-        return static_cast<llvm::Value *>(load);
+        try {
+            auto record = environment->get(expr->name);
+            auto load = builder->CreateLoad(record.type, record.allocation, expr->name.lexeme);
+            return static_cast<llvm::Value *>(load);
+        } catch (...) {
+            auto function = module->getFunction(expr->name.lexeme);
+
+            if (function != nullptr) {
+                return static_cast<llvm::Function *>(function);
+            } else {
+                throw;
+            }
+        }
     }
 
     std::any CodeGenerator::visitLogicalExpr(const std::shared_ptr<ast::Logical> &expr) {
@@ -159,14 +170,14 @@ namespace visitor {
 
     void CodeGenerator::executeBlock(const std::vector<std::shared_ptr<ast::Stmt>> &statements,
                                      const std::shared_ptr<Environment<EnvRecord>> &env) {
-        ++scope_id;
+        ++scopeId;
 
         auto previous = this->environment;
         this->environment = env;
 
         auto blockParent = builder->GetInsertBlock()->getParent();
-        auto block = llvm::BasicBlock::Create(*context, "begin-" + std::to_string(scope_id), blockParent);
-        auto afterBlock = llvm::BasicBlock::Create(*context, "end-" + std::to_string(scope_id));
+        auto block = llvm::BasicBlock::Create(*context, "begin-" + std::to_string(scopeId), blockParent);
+        auto afterBlock = llvm::BasicBlock::Create(*context, "end-" + std::to_string(scopeId));
 
         builder->CreateBr(block);
         builder->SetInsertPoint(block);
@@ -301,15 +312,122 @@ namespace visitor {
     }
 
     std::any CodeGenerator::visitCallExpr(const std::shared_ptr<ast::Call> &expr) {
-        return std::any();
+
+        auto calleeFunc = std::any_cast<llvm::Function *>(evaluate(expr->callee));
+
+        std::vector<llvm::Value *> arguments;
+        for (const std::shared_ptr<ast::Expr> &argument: expr->arguments) {
+            arguments.push_back(std::any_cast<llvm::Value *>(evaluate(argument)));
+        }
+
+        if (arguments.size() != calleeFunc->arg_size()) {
+            throw RuntimeError{expr->paren, "Expected " +
+                                            std::to_string(calleeFunc->arg_size()) + " arguments but got " +
+                                            std::to_string(arguments.size()) + "."};
+        }
+
+
+        return static_cast<llvm::Value *>(builder->CreateCall(calleeFunc, arguments));
     }
 
     std::any CodeGenerator::visitFunctionStmt(std::shared_ptr<ast::Function> stmt) {
-        return std::any();
+        std::vector<llvm::Type *> argsType;
+        for (const auto &param: stmt->params) {
+            llvm::Type *type;
+            switch (param.first.type) {
+                case scanning::STR:
+                    type = getStringTy();
+                    break;
+                case scanning::NUM:
+                    type = getDoubleTy();
+                    break;
+                case scanning::BOOL:
+                    type = getBoolTy();
+                    break;
+                default:
+                    // todo: refactor
+                    throw std::runtime_error("invalid input type");
+            }
+            argsType.push_back(type);
+        }
+
+        llvm::Type *returnType;
+        switch (stmt->returnType.type) {
+            case scanning::STR:
+                returnType = getStringTy();
+                break;
+            case scanning::NUM:
+                returnType = getDoubleTy();
+                break;
+            case scanning::BOOL:
+                returnType = getBoolTy();
+                break;
+            case scanning::VOID:
+                returnType = getVoidTy();
+                break;
+            default:
+                // todo: refactor
+                throw std::runtime_error("invalid input type");
+        }
+
+        auto backupEnv = environment;
+        auto backupBlock = builder->GetInsertBlock();
+
+        llvm::FunctionType *funcType = llvm::FunctionType::get(returnType, argsType, false);
+        llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, stmt->name.lexeme,
+                                                      module.get());
+
+        llvm::BasicBlock *entryBlock = llvm::BasicBlock::Create(*context, "func-entry", func);
+        builder->SetInsertPoint(entryBlock);
+
+        environment = std::make_shared<Environment<EnvRecord>>(environment);
+
+        for (size_t i = 0; i < func->arg_size(); ++i) {
+            auto arg = func->getArg(i);
+            auto [type, name] = stmt->params[i];
+            arg->setName(name.lexeme);
+            auto paramAlloca = builder->CreateAlloca(argsType[i]);
+            builder->CreateStore(arg, paramAlloca);
+            environment->define(name.lexeme, {paramAlloca, argsType[i]});
+        }
+
+        try {
+            executeBlock(stmt->body, environment);
+            if (returnType == getVoidTy()) {
+                builder->CreateRetVoid();
+            } else {
+                // todo: refactor
+                throw std::runtime_error("invalid return type");
+            }
+        } catch (YareYareDawaReturn &yareDawaReturn) {
+            auto result = std::any_cast<llvm::Value *>(yareDawaReturn.value);
+            if (result == nullptr) {
+                if (returnType == getVoidTy()) {
+                    builder->CreateRetVoid();
+                } else {
+                    throw std::runtime_error("invalid return type");
+                }
+            } else {
+                if (result->getType() == returnType) {
+                    builder->CreateRet(result);
+                } else {
+                    // todo: refactor
+                    throw std::runtime_error("invalid return type");
+                }
+            }
+        }
+
+        environment = backupEnv;
+        builder->SetInsertPoint(backupBlock);
+        assert(!llvm::verifyFunction(*func, &llvm::outs()));
+        return {};
     }
 
     std::any CodeGenerator::visitReturnStmt(std::shared_ptr<ast::Return> stmt) {
-        return std::any();
+        llvm::Value *value = nullptr; // void
+        if (stmt->value != nullptr) value = std::any_cast<llvm::Value *>(evaluate(stmt->value));
+
+        throw YareYareDawaReturn({value});
     }
 }
 #endif

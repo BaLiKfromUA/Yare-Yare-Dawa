@@ -74,7 +74,6 @@ namespace scanning {
         }
     };
 
-    // todo: fix inline
     inline const std::map<std::string, TokenType> Scanner::keywords =
             {
                     {"and",    TokenType::AND},
@@ -93,6 +92,10 @@ namespace scanning {
                     {"true",   TokenType::TRUE},
                     {"var",    TokenType::VAR},
                     {"while",  TokenType::WHILE},
+                    {"void",  TokenType::VOID},
+                    {"str",   TokenType::STR},
+                    {"num",   TokenType::NUM},
+                    {"bool",  TokenType::BOOL}
             };
 }
 
