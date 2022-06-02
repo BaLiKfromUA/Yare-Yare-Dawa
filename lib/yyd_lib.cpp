@@ -1,13 +1,14 @@
 #include <iostream>
 #include <vector>
 #include <cstring>
+#include <cmath>
 
 struct helper {
     std::vector<char *> string_cache{};
 
     ~helper() {
         for (char *str: string_cache) {
-            free(str);
+            operator delete(str);
         }
     }
 
@@ -27,10 +28,33 @@ extern "C" void __yyd_print_string(char *n) { std::cout << n << std::endl; }
 
 // strings
 extern "C" char *__yyd_string_concat(char *left, char *right) {
-    char *tmp = (char *) malloc(strlen(left) + 1);// todo: replace with new
+    char *tmp = new char[strlen(left) + 1];
     strcpy(tmp, left);
+    strcat(tmp, right);
     helper_instance.string_cache.push_back(tmp); // in order to be free later
-    return strcat(tmp, right);
+    return tmp;
+}
+
+extern "C" char *__yyd_string_multiply(char *str, double n_double) {
+    int n = floor(n_double);
+    int size = strlen(str);
+
+    if (n <= 0 || size == 0) {
+        char *empty = new char[1];
+        empty[0] = '\0';
+        helper_instance.string_cache.push_back(empty);
+        return empty;
+    }
+
+    char *result = new char[(strlen(str) * n) + 1];
+    int offset = 0;
+    for (int i = 0; i < n; ++i, offset += size) {
+        strcpy(result + offset, str);
+    }
+
+    helper_instance.string_cache.push_back(result);
+
+    return result;
 }
 
 // std

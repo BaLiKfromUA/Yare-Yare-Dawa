@@ -5,3 +5,6 @@ print a;
 print b;
 
 print a + "_" + b;
+
+print a * 3;
+print 5 * b;

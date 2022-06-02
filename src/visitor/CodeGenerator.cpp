@@ -82,8 +82,20 @@ namespace visitor {
                 checkNumberOperands(expr->op, left, right);
                 return builder->CreateFDiv(left, right, "tmp_div");
             case scanning::STAR:
-                checkNumberOperands(expr->op, left, right);
-                return builder->CreateFMul(left, right, "tmp_mul");
+                if (left->getType() == getDoubleTy() && right->getType() == getDoubleTy()) {
+                    return builder->CreateFMul(left, right, "tmp_mul");
+                }
+
+                if ((left->getType() == getDoubleTy() && right->getType() == getStringTy()) ||
+                    (left->getType() == getStringTy() && right->getType() == getDoubleTy())) {
+                    auto str = left->getType() == getStringTy() ? left : right;
+                    auto num = left->getType() == getDoubleTy() ? left : right;
+
+                    llvm::Function *calleeF = module->getFunction("__yyd_string_multiply");
+                    return static_cast<llvm::Value *>(builder->CreateCall(calleeF, {str, num}));
+                }
+
+                throw RuntimeError{expr->op, "Operands must be two numbers or one number and string."};
             default:
                 // Unreachable.
                 throw RuntimeError{expr->op, "Unknown binary operation."};
