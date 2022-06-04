@@ -19,6 +19,8 @@ namespace visitor {
         std::any evaluate(const std::shared_ptr<ast::Expr> &expr) {
             return expr->accept(*this);
         }
+
+        virtual std::any validateType(scanning::TokenType requiredToken, const std::any& candidateValue, bool checkVoid) = 0;
     };
 
 }

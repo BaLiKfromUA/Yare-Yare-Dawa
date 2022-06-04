@@ -10,7 +10,6 @@ target_link_libraries(
         ${PROJECT_NAME}_lib
 )
 
-# todo: refactor
 target_compile_features(${TESTS} PRIVATE cxx_std_17)
 target_include_directories(${TESTS}  PRIVATE ${LLVM_INCLUDE_DIRS})
 target_link_libraries(${TESTS} ${llvm_libs})

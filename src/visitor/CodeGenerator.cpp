@@ -343,42 +343,22 @@ namespace visitor {
     std::any CodeGenerator::visitFunctionStmt(std::shared_ptr<ast::Function> stmt) {
         std::vector<llvm::Type *> argsType;
         for (const auto &param: stmt->params) {
-            llvm::Type *type;
-            switch (param.first.type) {
-                case scanning::STR:
-                    type = getStringTy();
-                    break;
-                case scanning::NUM:
-                    type = getDoubleTy();
-                    break;
-                case scanning::BOOL:
-                    type = getBoolTy();
-                    break;
-                default:
-                    // todo: refactor
-                    throw std::runtime_error("invalid input type");
+            auto validatedType = validateType(param.first.type, param.second.type, false);
+            if (validatedType.type() == typeid(nullptr)) {
+                throw RuntimeError(param.second, "expected return type doesn't match with given");
             }
+            auto type = std::any_cast<llvm::Type *>(validatedType);
             argsType.push_back(type);
         }
 
-        llvm::Type *returnType;
-        switch (stmt->returnType.type) {
-            case scanning::STR:
-                returnType = getStringTy();
-                break;
-            case scanning::NUM:
-                returnType = getDoubleTy();
-                break;
-            case scanning::BOOL:
-                returnType = getBoolTy();
-                break;
-            case scanning::VOID:
-                returnType = getVoidTy();
-                break;
-            default:
-                // todo: refactor
-                throw std::runtime_error("invalid input type");
+
+        auto validatedType = validateType(stmt->returnType.type, nullptr, true);
+
+        if (validatedType.type() == typeid(nullptr)) {
+            throw RuntimeError(stmt->returnType, "expected return type doesn't match with given");
         }
+
+        auto *returnType = std::any_cast<llvm::Type *>(validatedType);
 
         auto backupEnv = environment;
         auto backupBlock = builder->GetInsertBlock();
@@ -403,28 +383,10 @@ namespace visitor {
 
         try {
             executeBlock(stmt->body, environment);
-            if (returnType == getVoidTy()) {
-                builder->CreateRetVoid();
-            } else {
-                // todo: refactor
-                throw std::runtime_error("invalid return type");
-            }
+            handleReturnValue(returnType, nullptr, stmt->returnType);
         } catch (YareYareDawaReturn &yareDawaReturn) {
             auto result = std::any_cast<llvm::Value *>(yareDawaReturn.value);
-            if (result == nullptr) {
-                if (returnType == getVoidTy()) {
-                    builder->CreateRetVoid();
-                } else {
-                    throw std::runtime_error("invalid return type");
-                }
-            } else {
-                if (result->getType() == returnType) {
-                    builder->CreateRet(result);
-                } else {
-                    // todo: refactor
-                    throw std::runtime_error("invalid return type");
-                }
-            }
+            handleReturnValue(returnType, result, stmt->returnType);
         }
 
         environment = backupEnv;
@@ -438,6 +400,24 @@ namespace visitor {
         if (stmt->value != nullptr) value = std::any_cast<llvm::Value *>(evaluate(stmt->value));
 
         throw YareYareDawaReturn({value});
+    }
+
+    std::any
+    CodeGenerator::validateType(scanning::TokenType requiredToken, const std::any &candidateValue, bool checkVoid) {
+        switch (requiredToken) {
+            case scanning::STR:
+                return getStringTy();
+            case scanning::NUM:
+                return getDoubleTy();
+            case scanning::BOOL:
+                return getBoolTy();
+            case scanning::VOID:
+                if (checkVoid) {
+                    return getVoidTy();
+                }
+            default:
+                return nullptr;
+        }
     }
 }
 #endif

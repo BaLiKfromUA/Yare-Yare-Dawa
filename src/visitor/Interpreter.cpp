@@ -173,7 +173,7 @@ namespace visitor {
 
     std::any Interpreter::visitPrintStmt(const std::shared_ptr<ast::Print> &stmt) {
         std::any value = evaluate(stmt->expression);
-        std::cout << stringify(value) << "\n"; // todo: maybe create println later??
+        std::cout << stringify(value) << "\n";
         return {};
     }
 
@@ -266,5 +266,31 @@ namespace visitor {
         if (stmt->value != nullptr) value = evaluate(stmt->value);
 
         throw YareYareDawaReturn{value};
+    }
+
+    std::any Interpreter::validateType(scanning::TokenType requiredToken, const std::any &candidateValue, bool checkVoid) {
+        bool isValid;
+
+        switch (requiredToken) {
+            case scanning::STR:
+                isValid = candidateValue.type() == typeid(std::string);
+                break;
+            case scanning::NUM:
+                isValid = candidateValue.type() == typeid(double);
+                break;
+            case scanning::BOOL:
+                isValid = candidateValue.type() == typeid(bool);
+                break;
+            case scanning::VOID:
+                if (checkVoid) {
+                    isValid = candidateValue.type() == typeid(nullptr);
+                    break;
+                }
+
+            default:
+                isValid = false;
+        }
+
+        return isValid;
     }
 }

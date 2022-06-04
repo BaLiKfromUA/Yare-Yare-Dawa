@@ -10,7 +10,7 @@
 #include <utility>  // std::move
 #include <vector>
 
-#include "../scanning/Token.h" // todo: fix
+#include "scanning/Token.h"
 #include "Expression.h"
 
 namespace ast {

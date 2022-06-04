@@ -96,6 +96,9 @@ namespace visitor {
 
         std::any visitReturnStmt(std::shared_ptr<ast::Return> stmt) override;
 
+    protected:
+        std::any validateType(scanning::TokenType requiredToken, const std::any &candidateValue, bool checkVoid) override;
+
     private:
         /* debug helpers */
         void dumpIR() {
@@ -197,6 +200,22 @@ namespace visitor {
 
         void createFnDecl(llvm::FunctionType *FT, const std::string &name) {
             llvm::Function::Create(FT, llvm::Function::ExternalLinkage, name, *module);
+        }
+
+        void handleReturnValue(llvm::Type* returnType, llvm::Value* returnValue, const scanning::Token& expectedToken) {
+            if (returnValue == nullptr) {
+                if (returnType == getVoidTy()) {
+                    builder->CreateRetVoid();
+                } else {
+                    throw RuntimeError(expectedToken, "expected return type doesn't match with given");
+                }
+            } else {
+                if (returnValue->getType() == returnType) {
+                    builder->CreateRet(returnValue);
+                } else {
+                    throw RuntimeError(expectedToken, "expected return type doesn't match with given");
+                }
+            }
         }
 
         void executeBlock(const std::vector<std::shared_ptr<ast::Stmt>> &statements,

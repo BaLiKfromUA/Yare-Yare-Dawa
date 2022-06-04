@@ -15,62 +15,26 @@ std::any visitor::YareYareDawaFunction::call(visitor::Interpreter &interpreter, 
     auto environment = std::make_shared<Environment<std::any>>(closure);
     for (int i = 0; i < declaration->params.size(); ++i) {
         auto [type, value] = declaration->params[i];
-        // todo: refactor
-        bool isValidType;
-        switch (type.type) {
-            case scanning::STR:
-                isValidType = arguments[i].type() == typeid(std::string);
-                break;
-            case scanning::NUM:
-                isValidType = arguments[i].type() == typeid(double);
-                break;
-            case scanning::BOOL:
-                isValidType = arguments[i].type() == typeid(bool);
-                break;
-            default:
-                isValidType = false;
-        }
-
+        bool isValidType = std::any_cast<bool>(interpreter.validateType(type.type, arguments[i], false));
 
         if (isValidType) {
             environment->define(value.lexeme,
                                 arguments[i]);
         } else {
-            // todo: refactor
-            throw std::runtime_error("invalid input type");
+            throw RuntimeError(type, "expected input type doesn't match with given");
         }
     }
 
     try {
         interpreter.executeBlock(declaration->body, environment);
     } catch (YareYareDawaReturn &returnValue) {
-
         auto result = returnValue.value;
-
-        // todo: refactor
-        bool isValidType;
-        switch (declaration->returnType.type) {
-            case scanning::STR:
-                isValidType = result.type() == typeid(std::string);
-                break;
-            case scanning::NUM:
-                isValidType = result.type() == typeid(double);
-                break;
-            case scanning::BOOL:
-                isValidType = result.type() == typeid(bool);
-                break;
-            case scanning::VOID:
-                isValidType = result.type() == typeid(nullptr);
-                break;
-            default:
-                isValidType = false;
-        }
+        bool isValidType = std::any_cast<bool>(interpreter.validateType(declaration->returnType.type, result, true));
 
         if (isValidType) {
             return result;
         } else {
-            // todo: refactor
-            throw std::runtime_error("invalid return type");
+            throw RuntimeError(declaration->returnType, "expected return type doesn't match with given");
         }
     }
 

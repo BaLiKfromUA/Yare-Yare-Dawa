@@ -8,6 +8,7 @@
 #include <any>
 #include <memory>
 #include "YareYareDawaCallable.h"
+#include "scanning/TokenType.h"
 
 namespace ast {
     class Function;

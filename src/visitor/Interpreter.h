@@ -54,6 +54,9 @@ namespace visitor {
             }
         }
 
+    protected:
+        std::any validateType(scanning::TokenType requiredToken, const std::any &candidateValue, bool checkVoid) override;
+
     public:
         std::any visitGroupingExpr(const std::shared_ptr<ast::Grouping> &expr) override {
             return evaluate(expr->expression);
