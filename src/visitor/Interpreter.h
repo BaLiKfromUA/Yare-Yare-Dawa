@@ -8,7 +8,6 @@
 #include <iostream>
 #include <memory>
 #include <utility>
-#include <chrono>
 #include "Errors.h"
 #include "scanning/Token.h"
 #include "scanning/TokenType.h"
@@ -16,23 +15,10 @@
 #include "ast/Statement.h"
 #include "Environment.h"
 #include "AstVisitor.h"
-#include "visitor/interpreter/YareYareDawaFunction.h"
+#include "interpreter/YareYareDawaFunction.h"
+#include "interpreter/StandardLibrary.h"
 
 namespace visitor {
-
-    class NativeClock : public YareYareDawaCallable {
-    public:
-        int arity() override { return 0; }
-
-        std::any call(Interpreter &interpreter,
-                      std::vector<std::any> arguments) override {
-            auto ticks = std::chrono::system_clock::now().time_since_epoch();
-            return std::chrono::duration<double>{ticks}.count() / 1000.0;
-        }
-
-        std::string toString() override { return "<native fn>"; }
-    };
-
     class Interpreter final : public AstVisitor {
         friend class YareYareDawaFunction;
 
@@ -41,7 +27,7 @@ namespace visitor {
 
     public:
         Interpreter() {
-            globals->define("clock", std::make_shared<NativeClock>());
+            enableStandardLibrary();
         }
 
         void visitAST(const std::vector<std::shared_ptr<ast::Stmt>> &statements) override {
@@ -55,7 +41,13 @@ namespace visitor {
         }
 
     protected:
-        std::any validateType(scanning::TokenType requiredToken, const std::any &candidateValue, bool checkVoid) override;
+        void enableStandardLibrary() override {
+            globals->define("now", std::make_shared<NativeClock>());
+            globals->define("len", std::make_shared<StrLen>());
+        }
+
+        std::any
+        validateType(scanning::TokenType requiredToken, const std::any &candidateValue, bool checkVoid) override;
 
     public:
         std::any visitGroupingExpr(const std::shared_ptr<ast::Grouping> &expr) override {
@@ -130,6 +122,18 @@ namespace visitor {
         static bool isEqual(const std::any &a, const std::any &b);
 
         static std::string stringify(const std::any &object);
+
+        static std::shared_ptr<YareYareDawaCallable>
+        findFunctionInStandardLibrary(std::any callee, const scanning::Token &exprParen) {
+            if (callee.type() == typeid(std::shared_ptr<NativeClock>)) {
+                return std::any_cast<std::shared_ptr<NativeClock>>(callee);
+            } else if (callee.type() == typeid(std::shared_ptr<StrLen>)) {
+                return std::any_cast<std::shared_ptr<StrLen>>(callee);
+            } else {
+                throw RuntimeError{exprParen,
+                                   "Can only call functions and classes."};
+            }
+        }
     };
 }
 

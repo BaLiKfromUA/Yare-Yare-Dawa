@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 #include <vector>
 #include <cstring>
 #include <cmath>
@@ -57,8 +58,15 @@ extern "C" char *__yyd_string_multiply(char *str, double n_double) {
     return result;
 }
 
-// std
-// todo:
+extern "C" double len(char *str) {
+    return strlen(str);
+}
+
+// standard library
+extern "C" double now() {
+    auto ticks = std::chrono::system_clock::now().time_since_epoch();
+    return std::chrono::duration<double>{ticks}.count() / 1000.0;
+}
 
 int main() {
     __yyd_start();

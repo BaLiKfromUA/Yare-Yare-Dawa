@@ -2,7 +2,9 @@ var a = "balik";
 var b = "mem";
 
 print a;
+print len(a);
 print b;
+print len(b);
 
 print a + "_" + b;
 

@@ -119,8 +119,7 @@ namespace visitor {
             auto casted_value = std::any_cast<std::string>(value);
             return convertStringToIR(casted_value);
         } else {
-            // todo: throw error in case of invalid type
-            return nullptr;
+            throw std::runtime_error("unknown literal!");
         }
     }
 
@@ -215,7 +214,7 @@ namespace visitor {
 
     std::any CodeGenerator::visitPrintStmt(const std::shared_ptr<ast::Print> &stmt) {
         auto value = std::any_cast<llvm::Value *>(evaluate(stmt->expression));
-        std::string function_name = "__yyd_print_double";
+        std::string function_name;
 
         if (value->getType() == getDoubleTy()) {
             function_name = "__yyd_print_double";
@@ -224,7 +223,7 @@ namespace visitor {
         } else if (value->getType() == getStringTy()) {
             function_name = "__yyd_print_string";
         } else {
-            // todo: throw error
+            throw std::runtime_error("no print function for your input!");
         }
 
         llvm::Function *calleeF = module->getFunction(function_name);
@@ -249,13 +248,7 @@ namespace visitor {
     }
 
     std::any CodeGenerator::visitIfStmt(const std::shared_ptr<ast::If> &stmt) {
-        auto condition = std::any_cast<llvm::Value *>(evaluate(stmt->condition));
-
-        if (!condition) {
-            return nullptr; // todo: fix;
-        }
-
-        condition = convertToBoolean(condition);
+        auto condition = convertToBoolean(std::any_cast<llvm::Value *>(evaluate(stmt->condition)));
 
         auto parent = builder->GetInsertBlock()->getParent();
         // Create blocks for the then and else cases.  Insert the 'then' block at the
@@ -269,10 +262,6 @@ namespace visitor {
 
         // Emit then value.
         builder->SetInsertPoint(thenBranch);
-        if (stmt->thenBranch == nullptr) {
-            // todo: throw RuntimeError{stmt, "Expected then branch for if statement!"};
-        }
-
         execute(stmt->thenBranch);
         builder->CreateBr(mergeBranch);
 
@@ -296,7 +285,6 @@ namespace visitor {
     std::any CodeGenerator::visitWhileStmt(const std::shared_ptr<ast::While> &stmt) {
 
         auto condition = std::any_cast<llvm::Value *>(evaluate(stmt->condition));
-        // todo: handle that body or condition is null
         condition = convertToBoolean(condition);
 
         auto parent = builder->GetInsertBlock()->getParent();
@@ -311,7 +299,6 @@ namespace visitor {
         }
 
         condition = std::any_cast<llvm::Value *>(evaluate(stmt->condition));
-        // todo: handle that body or condition is null
         condition = convertToBoolean(condition);
         builder->CreateCondBr(condition, loopBody, mergeBranch);
         // Emit merge block.
@@ -385,8 +372,8 @@ namespace visitor {
             executeBlock(stmt->body, environment);
             handleReturnValue(returnType, nullptr, stmt->returnType);
         } catch (YareYareDawaReturn &yareDawaReturn) {
-            auto result = std::any_cast<llvm::Value *>(yareDawaReturn.value);
-            handleReturnValue(returnType, result, stmt->returnType);
+            auto resultValue = std::any_cast<llvm::Value *>(yareDawaReturn.value);
+            handleReturnValue(returnType, resultValue, stmt->returnType);
         }
 
         environment = backupEnv;

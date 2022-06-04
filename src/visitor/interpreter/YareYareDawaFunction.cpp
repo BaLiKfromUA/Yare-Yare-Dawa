@@ -18,8 +18,7 @@ std::any visitor::YareYareDawaFunction::call(visitor::Interpreter &interpreter, 
         bool isValidType = std::any_cast<bool>(interpreter.validateType(type.type, arguments[i], false));
 
         if (isValidType) {
-            environment->define(value.lexeme,
-                                arguments[i]);
+            environment->define(value.lexeme,arguments[i]);
         } else {
             throw RuntimeError(type, "expected input type doesn't match with given");
         }
@@ -28,11 +27,11 @@ std::any visitor::YareYareDawaFunction::call(visitor::Interpreter &interpreter, 
     try {
         interpreter.executeBlock(declaration->body, environment);
     } catch (YareYareDawaReturn &returnValue) {
-        auto result = returnValue.value;
-        bool isValidType = std::any_cast<bool>(interpreter.validateType(declaration->returnType.type, result, true));
+        auto resultValue = returnValue.value;
+        bool isValidType = std::any_cast<bool>(interpreter.validateType(declaration->returnType.type, resultValue, true));
 
         if (isValidType) {
-            return result;
+            return resultValue;
         } else {
             throw RuntimeError(declaration->returnType, "expected return type doesn't match with given");
         }

@@ -21,6 +21,8 @@ namespace visitor {
         }
 
         virtual std::any validateType(scanning::TokenType requiredToken, const std::any& candidateValue, bool checkVoid) = 0;
+
+        virtual void enableStandardLibrary() = 0;
     };
 
 }

@@ -97,7 +97,8 @@ namespace visitor {
         std::any visitReturnStmt(std::shared_ptr<ast::Return> stmt) override;
 
     protected:
-        std::any validateType(scanning::TokenType requiredToken, const std::any &candidateValue, bool checkVoid) override;
+        std::any
+        validateType(scanning::TokenType requiredToken, const std::any &candidateValue, bool checkVoid) override;
 
     private:
         /* debug helpers */
@@ -145,7 +146,7 @@ namespace visitor {
         }
 
         // taken from https://stackoverflow.com/a/51811344
-        // todo: make this method more efficient
+        //  todo: make this method more efficient
         llvm::Value *convertStringToIR(const std::string &value) {
             auto charType = getCharTy();
 
@@ -202,7 +203,7 @@ namespace visitor {
             llvm::Function::Create(FT, llvm::Function::ExternalLinkage, name, *module);
         }
 
-        void handleReturnValue(llvm::Type* returnType, llvm::Value* returnValue, const scanning::Token& expectedToken) {
+        void handleReturnValue(llvm::Type *returnType, llvm::Value *returnValue, const scanning::Token &expectedToken) {
             if (returnValue == nullptr) {
                 if (returnType == getVoidTy()) {
                     builder->CreateRetVoid();
@@ -222,8 +223,9 @@ namespace visitor {
                           const std::shared_ptr<Environment<EnvRecord>> &env);
 
 
-        /* library helpers */
-        void enableStandardLibrary() {
+    protected:
+        void enableStandardLibrary() override {
+            // print
             llvm::FunctionType *printForDouble = llvm::FunctionType::get(getVoidTy(), {getDoubleTy()}, false);
             createFnDecl(printForDouble, "__yyd_print_double");
 
@@ -233,6 +235,7 @@ namespace visitor {
             llvm::FunctionType *printForStr = llvm::FunctionType::get(getVoidTy(), {getStringTy()}, false);
             createFnDecl(printForStr, "__yyd_print_string");
 
+            // string
             llvm::FunctionType *stringConcat = llvm::FunctionType::get(getStringTy(), {getStringTy(), getStringTy()},
                                                                        false);
             createFnDecl(stringConcat, "__yyd_string_concat");
@@ -240,6 +243,16 @@ namespace visitor {
             llvm::FunctionType *stringMultiply = llvm::FunctionType::get(getStringTy(), {getStringTy(), getDoubleTy()},
                                                                          false);
             createFnDecl(stringMultiply, "__yyd_string_multiply");
+
+            llvm::FunctionType *len = llvm::FunctionType::get(getDoubleTy(), {getStringTy()},
+                                                              false);
+            createFnDecl(len, "len");
+
+            // stl
+            llvm::FunctionType *clock = llvm::FunctionType::get(getDoubleTy(), {},
+                                                                false);
+            createFnDecl(clock, "now");
+
         }
     };
 }

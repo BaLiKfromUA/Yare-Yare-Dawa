@@ -4,7 +4,7 @@
 
 #include <iomanip>
 #include "Interpreter.h"
-#include "visitor/interpreter/YareYareDawaReturn.h"
+#include "interpreter/YareYareDawaReturn.h"
 
 namespace visitor {
 
@@ -239,11 +239,8 @@ namespace visitor {
 
         if (callee.type() == typeid(std::shared_ptr<YareYareDawaFunction>)) {
             function = std::any_cast<std::shared_ptr<YareYareDawaFunction>>(callee);
-        } else if (callee.type() == typeid(std::shared_ptr<NativeClock>)) {
-            function = std::any_cast<std::shared_ptr<NativeClock>>(callee);
         } else {
-            throw RuntimeError{expr->paren,
-                               "Can only call functions and classes."};
+            function = findFunctionInStandardLibrary(callee, expr->paren);
         }
 
         if (arguments.size() != function->arity()) {
@@ -268,7 +265,8 @@ namespace visitor {
         throw YareYareDawaReturn{value};
     }
 
-    std::any Interpreter::validateType(scanning::TokenType requiredToken, const std::any &candidateValue, bool checkVoid) {
+    std::any
+    Interpreter::validateType(scanning::TokenType requiredToken, const std::any &candidateValue, bool checkVoid) {
         bool isValid;
 
         switch (requiredToken) {
