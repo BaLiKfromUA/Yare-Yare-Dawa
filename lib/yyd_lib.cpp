@@ -100,7 +100,7 @@ extern "C" double len(char *str) {
     return strlen(str);
 }
 
-// input/output
+// output
 extern "C" void __yyd_print_double(double n) {
     std::cout << __yyd_num_to_string(n) << std::endl;
     // in order to not accumulate printed strings in cache
@@ -114,6 +114,44 @@ extern "C" void __yyd_print_bool(bool n) {
 }
 
 extern "C" void __yyd_print_string(char *n) { std::cout << n << std::endl; }
+
+
+// input
+extern "C" double __yyd_scan_double() {
+    double n;
+    std::cin >> n;
+    if (!std::cin) {
+        std::cerr << "Problem reading stdin\n";
+        exit(1);
+    }
+    return n;
+}
+
+extern "C" bool __yyd_scan_bool() {
+    bool n;
+    std::cin >> n;
+    if (!std::cin) {
+        std::cerr << "Problem reading stdin\n";
+        exit(1);
+    }
+    return n;
+}
+
+extern "C" char *__yyd_scan_string() {
+    std::string n;
+    std::cin >> n;
+    if (!std::cin) {
+        std::cerr << "Problem reading stdin\n";
+        exit(1);
+    }
+
+    char *tmp = new char[n.size() + 1];
+    strcpy(tmp, n.data());
+
+    helper_instance.string_cache.push_back(tmp);
+
+    return tmp;
+}
 
 
 // standard library

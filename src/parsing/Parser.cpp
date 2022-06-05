@@ -70,6 +70,10 @@ namespace parsing {
         if (match(scanning::TRUE)) return std::make_shared<ast::Literal>(true);
         if (match(scanning::NIL)) return std::make_shared<ast::Literal>(nullptr);
 
+        if (match(scanning::INPUT_BOOL)) return std::make_shared<ast::Input>(scanning::BOOL_TYPE);
+        if (match(scanning::INPUT_STR)) return std::make_shared<ast::Input>(scanning::STR_TYPE);
+        if (match(scanning::INPUT_NUM)) return std::make_shared<ast::Input>(scanning::NUM_TYPE);
+
         if (match(scanning::NUMBER, scanning::STRING)) {
             return std::make_shared<ast::Literal>(previous().literal);
         }

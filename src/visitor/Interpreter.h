@@ -69,6 +69,8 @@ namespace visitor {
 
         std::any visitCallExpr(const std::shared_ptr<ast::Call> &expr) override;
 
+        std::any visitInputExpr(const std::shared_ptr<ast::Input> &expr) override;
+
         std::any visitBlockStmt(const std::shared_ptr<ast::Block> &stmt) override;
 
         std::any visitExpressionStmt(const std::shared_ptr<ast::Expression> &stmt) override;

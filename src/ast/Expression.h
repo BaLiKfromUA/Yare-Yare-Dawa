@@ -30,6 +30,8 @@ namespace ast {
 
     class Call;
 
+    class Input;
+
     class ExprVisitor {
     public:
         virtual std::any visitAssignExpr(const std::shared_ptr<ast::Assign> &expr) = 0;
@@ -47,6 +49,8 @@ namespace ast {
         virtual std::any visitLogicalExpr(const std::shared_ptr<ast::Logical> &expr) = 0;
 
         virtual std::any visitCallExpr(const std::shared_ptr<ast::Call> &expr) = 0;
+
+        virtual std::any visitInputExpr(const std::shared_ptr<ast::Input> &expr) = 0;
 
         virtual ~ExprVisitor() = default;
     };
@@ -158,6 +162,18 @@ namespace ast {
         const std::shared_ptr<Expr> callee;
         const Token paren;
         const std::vector<std::shared_ptr<Expr>> arguments;
+    };
+
+    class Input final : public Expr, public std::enable_shared_from_this<Input> {
+    public:
+
+        explicit Input(const scanning::TokenType inputType) : inputType(inputType) {}
+
+        std::any accept(ExprVisitor &visitor) override {
+            return visitor.visitInputExpr(shared_from_this());
+        }
+
+        const scanning::TokenType inputType;
     };
 }
 

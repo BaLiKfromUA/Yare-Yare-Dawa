@@ -2,7 +2,7 @@
 
 # USE IT ONLY FOR DEBUG!
 
-INPUT_FILE="./examples/strings_example.yyd"
+INPUT_FILE="./examples/input_example.yyd"
 
 cmake -Bbuild
 cmake --build build

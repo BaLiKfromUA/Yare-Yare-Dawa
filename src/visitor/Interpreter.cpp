@@ -270,16 +270,16 @@ namespace visitor {
         bool isValid;
 
         switch (requiredToken) {
-            case scanning::STR:
+            case scanning::STR_TYPE:
                 isValid = candidateValue.type() == typeid(std::string);
                 break;
-            case scanning::NUM:
+            case scanning::NUM_TYPE:
                 isValid = candidateValue.type() == typeid(double);
                 break;
-            case scanning::BOOL:
+            case scanning::BOOL_TYPE:
                 isValid = candidateValue.type() == typeid(bool);
                 break;
-            case scanning::VOID:
+            case scanning::VOID_TYPE:
                 if (checkVoid) {
                     isValid = candidateValue.type() == typeid(nullptr);
                     break;
@@ -290,5 +290,40 @@ namespace visitor {
         }
 
         return isValid;
+    }
+
+    // todo: refactor somehow to reduce code duplication
+    std::any Interpreter::visitInputExpr(const std::shared_ptr<ast::Input> &expr) {
+        switch (expr->inputType) {
+            case scanning::STR_TYPE: {
+                std::string n;
+                std::cin >> n;
+                if (!std::cin) {
+                    std::cerr << "Problem reading stdin\n";
+                    exit(1);
+                }
+                return n;
+            }
+            case scanning::NUM_TYPE: {
+                int n;
+                std::cin >> n;
+                if (!std::cin) {
+                    std::cerr << "Problem reading stdin\n";
+                    exit(1);
+                }
+                return n;
+            }
+            case scanning::BOOL_TYPE: {
+                bool n;
+                std::cin >> n;
+                if (!std::cin) {
+                    std::cerr << "Problem reading stdin\n";
+                    exit(1);
+                }
+                return n;
+            }
+            default:
+                throw std::runtime_error("unknown input function!");
+        }
     }
 }

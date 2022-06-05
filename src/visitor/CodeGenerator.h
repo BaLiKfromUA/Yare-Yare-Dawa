@@ -78,6 +78,8 @@ namespace visitor {
 
         std::any visitLogicalExpr(const std::shared_ptr<ast::Logical> &expr) override;
 
+        std::any visitInputExpr(const std::shared_ptr<ast::Input> &expr) override;
+
         std::any visitBlockStmt(const std::shared_ptr<ast::Block> &stmt) override;
 
         std::any visitExpressionStmt(const std::shared_ptr<ast::Expression> &stmt) override;
@@ -236,6 +238,16 @@ namespace visitor {
 
             llvm::FunctionType *printForStr = llvm::FunctionType::get(getVoidTy(), {getStringTy()}, false);
             createFnDecl(printForStr, "__yyd_print_string");
+
+            // scan
+            llvm::FunctionType *scanForDouble = llvm::FunctionType::get(getDoubleTy(), {}, false);
+            createFnDecl(scanForDouble, "__yyd_scan_double");
+
+            llvm::FunctionType *scanForBool = llvm::FunctionType::get(getBoolTy(), {}, false);
+            createFnDecl(scanForBool, "__yyd_scan_bool");
+
+            llvm::FunctionType *scanForString = llvm::FunctionType::get(getStringTy(), {}, false);
+            createFnDecl(scanForString, "__yyd_scan_string");
 
             // string
             llvm::FunctionType *stringConcat = llvm::FunctionType::get(getStringTy(), {getStringTy(), getStringTy()},

@@ -3,9 +3,9 @@
 set -eoux pipefail
 
 function run_test() {
-  INPUT_FILE=$1
-  NAME=$(basename "$INPUT_FILE" .yyd)
-  EXPECTED_OUTPUT_FILE="$PWD/integration-tests/expected-output/$NAME.output"
+  EXPECTED_OUTPUT_FILE=$1
+  NAME=$(basename "$EXPECTED_OUTPUT_FILE" .output)
+  INPUT_FILE="$PWD/examples/$NAME.yyd"
   REAL_OUTPUT_FILE="$PWD/test.output"
 
   RUN_MODE=$2
@@ -28,11 +28,11 @@ function run_test() {
   fi
 }
 
-EXAMPLES="$PWD/examples"
-for example in "$EXAMPLES"/*.yyd; do
+TEST_FOLDER="$PWD/integration-tests/expected-output"
+for example in "$TEST_FOLDER"/*.output; do
   run_test "$example" "interpreter"
 done
 
-for example in "$EXAMPLES"/*.yyd; do
+for example in "$TEST_FOLDER"/*.output; do
   run_test "$example" "compiler"
 done

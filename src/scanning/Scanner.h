@@ -92,10 +92,13 @@ namespace scanning {
                     {"true",   TokenType::TRUE},
                     {"var",    TokenType::VAR},
                     {"while",  TokenType::WHILE},
-                    {"void",  TokenType::VOID},
-                    {"str",   TokenType::STR},
-                    {"num",   TokenType::NUM},
-                    {"bool",  TokenType::BOOL}
+                    {"void",   TokenType::VOID_TYPE},
+                    {"str",    TokenType::STR_TYPE},
+                    {"num",    TokenType::NUM_TYPE},
+                    {"bool",   TokenType::BOOL_TYPE},
+                    {"?s",     TokenType::INPUT_STR},
+                    {"?n",     TokenType::INPUT_NUM},
+                    {"?b",     TokenType::INPUT_BOOL}
             };
 }
 

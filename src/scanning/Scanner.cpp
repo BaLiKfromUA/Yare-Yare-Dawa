@@ -84,7 +84,7 @@ namespace scanning {
             default:
                 if (std::isdigit(c)) {
                     number();
-                } else if (std::isalpha(c)) {
+                } else if (std::isalpha(c) || c == '?') {
                     identifier();
                 } else {
                     Errors::error(line, "Unexpected character.");

@@ -130,11 +130,11 @@ namespace parsing {
                     auto paramType = advance();
                     // validate type
                     switch (paramType.type) {
-                        case scanning::STR:
-                        case scanning::NUM:
-                        case scanning::BOOL:
+                        case scanning::STR_TYPE:
+                        case scanning::NUM_TYPE:
+                        case scanning::BOOL_TYPE:
                             break;
-                        case scanning::VOID:
+                        case scanning::VOID_TYPE:
                             // void as an input is strange!
                         default:
                             throw error(paramType, "Invalid type!");
@@ -149,10 +149,10 @@ namespace parsing {
             auto returnType = advance();
             // validate type
             switch (returnType.type) {
-                case scanning::VOID:
-                case scanning::STR:
-                case scanning::NUM:
-                case scanning::BOOL:
+                case scanning::VOID_TYPE:
+                case scanning::STR_TYPE:
+                case scanning::NUM_TYPE:
+                case scanning::BOOL_TYPE:
                     break;
                 default:
                     throw error(returnType, "Unknown type!");
@@ -291,7 +291,7 @@ namespace parsing {
 
         std::shared_ptr<ast::Expr> finishCall(const std::shared_ptr<ast::Expr> &callee);
 
-        // primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
+        // primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER | INPUT;
         std::shared_ptr<ast::Expr> primary();
 
     };

@@ -404,13 +404,13 @@ namespace visitor {
     std::any
     CodeGenerator::validateType(scanning::TokenType requiredToken, const std::any &candidateValue, bool checkVoid) {
         switch (requiredToken) {
-            case scanning::STR:
+            case scanning::STR_TYPE:
                 return getStringTy();
-            case scanning::NUM:
+            case scanning::NUM_TYPE:
                 return getDoubleTy();
-            case scanning::BOOL:
+            case scanning::BOOL_TYPE:
                 return getBoolTy();
-            case scanning::VOID:
+            case scanning::VOID_TYPE:
                 if (checkVoid) {
                     return getVoidTy();
                 }
@@ -432,6 +432,27 @@ namespace visitor {
         }
 
         return static_cast<llvm::Value *>(builder->CreateCall(function, {arg}));
+    }
+
+    std::any CodeGenerator::visitInputExpr(const std::shared_ptr<ast::Input> &expr) {
+        std::string name;
+
+        switch (expr->inputType) {
+            case scanning::STR_TYPE:
+                name = "__yyd_scan_string";
+                break;
+            case scanning::NUM_TYPE:
+                name = "__yyd_scan_double";
+                break;
+            case scanning::BOOL_TYPE:
+                name = "__yyd_scan_bool";
+                break;
+            default:
+                throw std::runtime_error("unknown input function!");
+        }
+
+        auto calleeFunc = module->getFunction(name);
+        return static_cast<llvm::Value *>(builder->CreateCall(calleeFunc, {}));
     }
 }
 #endif
