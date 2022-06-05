@@ -84,6 +84,8 @@ namespace visitor {
 
         std::any visitPrintStmt(const std::shared_ptr<ast::Print> &stmt) override;
 
+        llvm::Value* visitToStringStmt(llvm::Value* arg);
+
         std::any visitVarStmt(const std::shared_ptr<ast::Var> &stmt) override;
 
         std::any visitIfStmt(const std::shared_ptr<ast::If> &stmt) override;
@@ -247,6 +249,18 @@ namespace visitor {
             llvm::FunctionType *len = llvm::FunctionType::get(getDoubleTy(), {getStringTy()},
                                                               false);
             createFnDecl(len, "len");
+
+            llvm::FunctionType *doubleToString = llvm::FunctionType::get(getStringTy(), {getDoubleTy()},
+                                                                         false);
+            createFnDecl(doubleToString, "__yyd_num_to_string");
+
+            llvm::FunctionType *boolToString = llvm::FunctionType::get(getStringTy(), {getBoolTy()},
+                                                                       false);
+            createFnDecl(boolToString, "__yyd_bool_to_string");
+
+            llvm::FunctionType *stringToString = llvm::FunctionType::get(getStringTy(), {getStringTy()},
+                                                                         false);
+            createFnDecl(stringToString, "__yyd_string_to_string");
 
             // stl
             llvm::FunctionType *clock = llvm::FunctionType::get(getDoubleTy(), {},

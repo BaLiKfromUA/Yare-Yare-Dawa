@@ -144,7 +144,14 @@ namespace visitor {
             auto load = builder->CreateLoad(record.type, record.allocation, expr->name.lexeme);
             return static_cast<llvm::Value *>(load);
         } catch (...) {
-            auto function = module->getFunction(expr->name.lexeme);
+            llvm::Function *function;
+
+            // todo: refactor it later via token similar to PRINT
+            if (expr->name.lexeme == "text") {
+                function = module->getFunction("__yyd_num_to_string");
+            } else {
+                function = module->getFunction(expr->name.lexeme);
+            }
 
             if (function != nullptr) {
                 return static_cast<llvm::Function *>(function);
@@ -324,7 +331,12 @@ namespace visitor {
         }
 
 
-        return static_cast<llvm::Value *>(builder->CreateCall(calleeFunc, arguments));
+        // todo: refactor it later via token similar to PRINT
+        if (calleeFunc->getName() == "__yyd_num_to_string") {
+            return visitToStringStmt(arguments[0]);
+        } else {
+            return static_cast<llvm::Value *>(builder->CreateCall(calleeFunc, arguments));
+        }
     }
 
     std::any CodeGenerator::visitFunctionStmt(std::shared_ptr<ast::Function> stmt) {
@@ -405,6 +417,21 @@ namespace visitor {
             default:
                 return nullptr;
         }
+    }
+
+    llvm::Value *CodeGenerator::visitToStringStmt(llvm::Value *arg) {
+        llvm::Function *function;
+        if (arg->getType() == getDoubleTy()) {
+            function = module->getFunction("__yyd_num_to_string");
+        } else if (arg->getType() == getBoolTy()) {
+            function = module->getFunction("__yyd_bool_to_string");
+        } else if (arg->getType() == getStringTy()) {
+            function = module->getFunction("__yyd_string_to_string");
+        } else {
+            throw std::runtime_error("no str function for your input!");
+        }
+
+        return static_cast<llvm::Value *>(builder->CreateCall(function, {arg}));
     }
 }
 #endif

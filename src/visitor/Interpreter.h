@@ -44,6 +44,7 @@ namespace visitor {
         void enableStandardLibrary() override {
             globals->define("now", std::make_shared<NativeClock>());
             globals->define("len", std::make_shared<StrLen>());
+            globals->define("text", std::make_shared<ToStringHelper>());
         }
 
         std::any
@@ -86,6 +87,8 @@ namespace visitor {
 
         std::any visitReturnStmt(std::shared_ptr<ast::Return> stmt) override;
 
+        static std::string stringify(const std::any &object);
+
     private:
         void executeBlock(const std::vector<std::shared_ptr<ast::Stmt>> &statements,
                           const std::shared_ptr<Environment<>> &env);
@@ -121,14 +124,14 @@ namespace visitor {
 
         static bool isEqual(const std::any &a, const std::any &b);
 
-        static std::string stringify(const std::any &object);
-
         static std::shared_ptr<YareYareDawaCallable>
         findFunctionInStandardLibrary(std::any callee, const scanning::Token &exprParen) {
             if (callee.type() == typeid(std::shared_ptr<NativeClock>)) {
                 return std::any_cast<std::shared_ptr<NativeClock>>(callee);
             } else if (callee.type() == typeid(std::shared_ptr<StrLen>)) {
                 return std::any_cast<std::shared_ptr<StrLen>>(callee);
+            } else if (callee.type() == typeid(std::shared_ptr<ToStringHelper>)) {
+                return std::any_cast<std::shared_ptr<ToStringHelper>>(callee);
             } else {
                 throw RuntimeError{exprParen,
                                    "Can only call functions and classes."};

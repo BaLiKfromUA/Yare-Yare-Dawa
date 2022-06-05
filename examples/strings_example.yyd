@@ -10,3 +10,5 @@ print a + "_" + b;
 
 print a * 3;
 print 5 * b;
+
+print "Name: " + text(a) + " Age: " + text(22) + " Flag: " + text(true);

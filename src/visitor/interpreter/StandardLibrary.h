@@ -30,12 +30,22 @@ namespace visitor {
 
         std::any call(Interpreter &interpreter, std::vector<std::any> arguments) override {
             auto arg = arguments[0];
-            if (arg.type() != typeid(std::string)) {
-                throw std::runtime_error("Invalid argument for len() function! Requires string");
-            }
-
+            // todo: error handling
             return static_cast<double >(std::any_cast<std::string>(arg).size());
         }
+
+        std::string toString() override {
+            return "<native fn>";
+        }
+    };
+
+    class ToStringHelper final  : public YareYareDawaCallable {
+    public:
+        int arity() override {
+            return 1;
+        }
+
+        std::any call(Interpreter &interpreter, std::vector<std::any> arguments) override;
 
         std::string toString() override {
             return "<native fn>";
