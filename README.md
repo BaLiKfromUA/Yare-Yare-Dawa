@@ -17,7 +17,9 @@ Yare-Yare-Dawa language supports:
 - Predefined and user-defined functions
 
 
-For the full version check out [Language Description (WIP)](docs/language_description.md)
+For the full version check out [Language Description (WIP)](docs/language_description.md).
+
+Also, you might understand the language features by [examples](examples/).
 
 ## High-level architecture of the project 
 
