@@ -12,6 +12,10 @@
 #include "llvm/IR/Value.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/IR/LegacyPassManager.h"
+#include "llvm/Transforms/InstCombine/InstCombine.h"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Scalar/GVN.h"
 
 #include <memory>
 #include <vector>
@@ -19,6 +23,8 @@
 #include "Errors.h"
 #include "Environment.h"
 #include "AstVisitor.h"
+
+#define ENABLE_OPTIMIZER
 
 namespace visitor {
     class CodeGenerator final : public AstVisitor {
@@ -38,6 +44,9 @@ namespace visitor {
         std::unique_ptr<llvm::Module> module;
         std::unique_ptr<llvm::IRBuilder<>> builder;
         std::unique_ptr<llvm::Function *> mainFunction;
+#ifdef ENABLE_OPTIMIZER
+        std::unique_ptr<llvm::legacy::FunctionPassManager> fpm;
+#endif
 
     public:
         CodeGenerator() {
@@ -47,11 +56,28 @@ namespace visitor {
 
             // Create a new builder for the module.
             builder = std::make_unique<llvm::IRBuilder<>>(*context);
+
+#ifdef ENABLE_OPTIMIZER
+            // Create and enable optimizations
+            fpm = std::make_unique<llvm::legacy::FunctionPassManager>(module.get());
+
+            fpm->add(llvm::createInstructionCombiningPass());
+            // Reassociate expressions.
+            fpm->add(llvm::createReassociatePass());
+            // Eliminate Common SubExpressions.
+            fpm->add(llvm::createGVNPass());
+            // Simplify the control flow graph (deleting unreachable blocks, etc).
+            fpm->add(llvm::createCFGSimplificationPass());
+
+            fpm->doInitialization();
+#endif
+
+            // Define standard functions
+            enableStandardLibrary();
         }
 
         void visitAST(const std::vector<std::shared_ptr<ast::Stmt>> &statements) override {
             startMainFunction("__yyd_start");
-            enableStandardLibrary();
             try {
                 for (const std::shared_ptr<ast::Stmt> &statement: statements) {
                     execute(statement);
@@ -86,7 +112,7 @@ namespace visitor {
 
         std::any visitPrintStmt(const std::shared_ptr<ast::Print> &stmt) override;
 
-        llvm::Value* visitToStringStmt(llvm::Value* arg);
+        llvm::Value *visitToStringStmt(llvm::Value *arg);
 
         std::any visitVarStmt(const std::shared_ptr<ast::Var> &stmt) override;
 
@@ -201,7 +227,13 @@ namespace visitor {
             builder->SetInsertPoint(BB);
         }
 
-        void endMainFunction() { builder->CreateRetVoid(); }
+        void endMainFunction() {
+            builder->CreateRetVoid();
+#ifdef ENABLE_OPTIMIZER
+            // Optimize the function.
+            fpm->run(**mainFunction);
+#endif
+        }
 
         void createFnDecl(llvm::FunctionType *FT, const std::string &name) {
             llvm::Function::Create(FT, llvm::Function::ExternalLinkage, name, *module);

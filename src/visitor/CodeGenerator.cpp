@@ -391,6 +391,10 @@ namespace visitor {
         environment = backupEnv;
         builder->SetInsertPoint(backupBlock);
         assert(!llvm::verifyFunction(*func, &llvm::outs()));
+#ifdef ENABLE_OPTIMIZER
+        // Optimize the function.
+        fpm->run(*func);
+#endif
         return {};
     }
 
