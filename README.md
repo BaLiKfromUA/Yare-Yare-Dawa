@@ -6,7 +6,18 @@ Tiny programming language for learning purpose.
     print "Hello, World!";
 ```
 
-## [Language Description (WIP)](docs/language_description.md)
+## Brief description
+
+Yare-Yare-Dawa language supports:
+- String, float, boolean data types
+- Arithmetic, boolean expressions
+- Input/output operators
+- Variables, scope blocks
+- Flow control (if statement and loops)
+- Predefined and user-defined functions
+
+
+For the full version check out [Language Description (WIP)](docs/language_description.md)
 
 ## High-level architecture of the project 
 
@@ -40,3 +51,9 @@ In order to build **Yare-Yare-Dawa** you will need:
   cmake --build build
   ./integration-tests/test_runner.sh
 ```
+
+## Why Yare Yare Dawa?
+
+I was developing this project during the war in Ukraine. Simultaneously, I had to work full-time, write my bachelor's thesis and pass several programming courses. So this phrase describes my emotions at the moments of tiring.
+
+[Gimme A Damn Break](https://youtu.be/by3iQP2c3Qk)
