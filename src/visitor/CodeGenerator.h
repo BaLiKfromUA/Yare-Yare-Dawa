@@ -61,6 +61,7 @@ namespace visitor {
             // Create and enable optimizations
             fpm = std::make_unique<llvm::legacy::FunctionPassManager>(module.get());
 
+            // Do simple "peephole" optimizations and bit-twiddling optzns.
             fpm->add(llvm::createInstructionCombiningPass());
             // Reassociate expressions.
             fpm->add(llvm::createReassociatePass());

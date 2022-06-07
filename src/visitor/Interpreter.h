@@ -109,7 +109,6 @@ namespace visitor {
             throw RuntimeError{op, "Operands must be numbers."};
         }
 
-        // we follow Ruby’s simple rule: false and nil are false, and everything else is true.
         static bool isTruthy(const std::any &object) {
             if (object.type() == typeid(nullptr)) return false;
 
