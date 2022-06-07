@@ -29,11 +29,11 @@ Also, you might understand the language features by [examples](examples/).
 
 ### Platform Support And Requirements
 
-**Yare-Yare-Dawa** has been tested on **Ubuntu 20.04** and **Ubuntu 22.04**. 
+**Yare-Yare-Dawa** has been tested on **Ubuntu 22.04** and **Windows 10**. 
 
 In order to build **Yare-Yare-Dawa** you will need:
 
-* **LLVM 13** and **Clang 13**
+* **LLVM 13** and **Clang 13** _(if you use Linux!)_
 * C++ compiler that supports **C++17**
 * **CMake 3.21** or higher
 

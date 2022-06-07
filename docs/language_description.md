@@ -133,3 +133,44 @@ for (var a = 1; a < 10; a = a + 1) {
   print a;
 }
 ```
+
+### Functions
+
+#### Built-in
+
+- `print str|num|bool` -- prints string representation of the input, each `print` result starts on a new line
+```javascript
+print 1; // "1\n"
+print 3.14; // "3.14\n"
+print true; // "true\n"
+print false; // "false\n"
+print "string"; //"string\n"
+```
+
+- `?(s|n|b)` -- input operator with the expected type flag. `s` stands for `string` type, `n` -- number, `b` -- boolean type.
+```javascript
+var a = ?n; // lets assume that I entered 42
+print a; // "42\n"
+
+var b = ?s; // lets assume that I entered "balik"
+print b; // "balik\n"
+
+var c = ?b; // lets assume that I entered 1
+print c; // "true\n"
+```
+
+- `now()` -- returns current timestamp since epoch as a float number
+```javascript
+now(); // 1654592.223268
+```
+- `text(str|num|bool)` -- returns string representation of the input
+```javascript
+text(1); // "1"
+text(3.14); // "3.14"
+text(true); // "true"
+text(false); // "false"
+text("string"); // "string"
+```
+#### User-defined
+
+// todo:

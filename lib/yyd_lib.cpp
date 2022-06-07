@@ -25,8 +25,6 @@ struct helper {
 // helper
 extern "C" void __yyd_start();
 
-// todo: scan
-
 // strings
 extern "C" char *__yyd_string_concat(char *left, char *right) {
     char *tmp = new char[strlen(left) + strlen(right) + 1];
